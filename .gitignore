@@ -13,7 +13,8 @@ venv/
 .env
 
 # Données brutes (trop lourdes pour GitHub)
-data/
+data/*
+!data/.gitkeep
 
 # Modèles sauvegardés
 *.pkl
