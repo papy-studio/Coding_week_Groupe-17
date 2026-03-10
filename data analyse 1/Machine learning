@@ -1,0 +1,111 @@
+# ═══════════════════════════════════════════════════════════
+# MODÈLE 1 — RÉGRESSION LOGISTIQUE
+# ═══════════════════════════════════════════════════════════
+
+# ── Importations ─────────────────────────────────────────
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, 
+                             classification_report,
+                             confusion_matrix)
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ── 1. Charger la data préparée ──────────────────────────
+# On utilise les CSV qu'on a créés dans data_processing.py
+# Plus besoin de réencoder — c'est déjà fait !
+X_train = pd.read_csv('data/X_train.csv')
+X_test  = pd.read_csv('data/X_test.csv')
+y_train = pd.read_csv('data/y_train.csv').squeeze()  # squeeze() convertit le DataFrame en Series (liste simple)
+y_test  = pd.read_csv('data/y_test.csv').squeeze()
+
+print(f"✅ Data chargée")
+print(f"   Entraînement : {X_train.shape[0]} patients")
+print(f"   Test         : {X_test.shape[0]} patients")
+
+# ── 2. Créer le modèle ───────────────────────────────────
+# max_iter=1000 : nombre maximum d'ajustements des poids
+#                 (par défaut 100, souvent insuffisant)
+# class_weight='balanced' : compense le léger déséquilibre
+#                           entre les 7 classes
+# random_state=42 : fixe le hasard pour des résultats
+#                   reproductibles (42 est une convention)
+model = LogisticRegression(
+    max_iter=1000,
+    class_weight='balanced',
+    random_state=42
+)
+
+# ── 3. Entraîner le modèle ───────────────────────────────
+# C'est ici que le modèle apprend les poids de chaque feature
+# Il ajuste w1, w2, w3... jusqu'à minimiser les erreurs
+# fit() = "apprends à partir de ces données"
+model.fit(X_train, y_train)
+print("✅ Modèle entraîné !")
+
+# ── 4. Faire des prédictions ─────────────────────────────
+# On donne au modèle les features des patients de test
+# Il prédit leur niveau d'obésité SANS voir y_test
+# predict() = "prédit la classe la plus probable"
+y_pred = model.predict(X_test)
+
+# ── 5. Évaluer les performances ──────────────────────────
+# accuracy = % de bonnes prédictions sur tous les patients
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n{'='*50}")
+print(f"RÉSULTATS — Régression Logistique")
+print(f"{'='*50}")
+print(f"Accuracy : {accuracy*100:.2f}%")
+
+# classification_report donne pour chaque classe :
+# precision = sur tous ceux qu'on a prédit "obèse", combien l'étaient vraiment ?
+# recall    = sur tous les vrais obèses, combien on a correctement détectés ?
+# f1-score  = moyenne entre precision et recall (le plus important)
+print("\nRapport détaillé par classe :")
+print(classification_report(y_test, y_pred))
+
+# ── 6. Matrice de confusion ──────────────────────────────
+# Montre visuellement où le modèle se trompe
+# Ligne = vraie classe, Colonne = classe prédite
+# La diagonale = bonnes prédictions
+# Hors diagonale = erreurs
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(
+    cm,
+    annot=True,        # Affiche les chiffres dans chaque case
+    fmt='d',           # Format entier (pas de décimales)
+    cmap='Blues',      # Couleur bleue
+    xticklabels=['Insuf.', 'Normal', 'Obese_I', 'Obese_II', 
+                 'Obese_III', 'Over_I', 'Over_II'],
+    yticklabels=['Insuf.', 'Normal', 'Obese_I', 'Obese_II', 
+                 'Obese_III', 'Over_I', 'Over_II']
+)
+plt.title('Matrice de Confusion — Régression Logistique', 
+          fontsize=14, fontweight='bold')
+plt.ylabel('Vraie classe')
+plt.xlabel('Classe prédite')
+plt.tight_layout()
+plt.show()
+
+# ── 7. Poids appris par le modèle ────────────────────────
+# Montre quelles features ont le plus influencé les décisions
+# Poids positif élevé = augmente le risque d'obésité
+# Poids négatif élevé = réduit le risque d'obésité
+feature_names = X_train.columns
+importances = abs(model.coef_).mean(axis=0)  # Moyenne sur les 7 classes
+
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': importances
+}).sort_values('Importance', ascending=True)
+
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Importance'], 
+         color='steelblue')
+plt.title('Importance des features — Régression Logistique',
+          fontsize=14, fontweight='bold')
+plt.xlabel('Importance moyenne')
+plt.tight_layout()
+plt.show()
