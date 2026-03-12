@@ -375,20 +375,16 @@ st.markdown("""
 # ── Choose label ──────────────────────────────────────────────────────────────
 st.markdown('<div class="choose-label">Choisissez votre espace</div>', unsafe_allow_html=True)
 
-# ── Cards (HTML only for layout, buttons below) ───────────────────────────────
-st.markdown("""
-<div class="cards-grid">
+# ── Cards + buttons par colonne ───────────────────────────────────────────────
+col_doc, col_pat = st.columns(2)
 
-    <!-- Médecin -->
+with col_doc:
+    st.markdown("""
     <div class="path-card doctor">
         <div class="card-icon">🩺</div>
         <div class="card-role">Personnel médical</div>
-        <div class="card-title">Espace<br>Médecin</div>
-        <div class="card-desc">
-            Accédez au tableau de bord clinique, 
-            analysez le risque d'obésité de vos patients 
-            et rédigez des recommandations personnalisées.
-        </div>
+        <div class="card-title">Espace Médecin</div>
+        <div class="card-desc">Accédez au tableau de bord clinique, analysez le risque d'obésité de vos patients et rédigez des recommandations personnalisées.</div>
         <ul class="card-features">
             <li>Tableau de bord patients</li>
             <li>Saisie des données cliniques</li>
@@ -396,36 +392,25 @@ st.markdown("""
             <li>Rédaction des recommandations</li>
         </ul>
     </div>
+    """, unsafe_allow_html=True)
+    if st.button("🩺  Accéder — Espace Médecin", use_container_width=True, key="btn_doctor"):
+        st.switch_page("pages/doctor_login.py")
 
-    <!-- Patient -->
+with col_pat:
+    st.markdown("""
     <div class="path-card patient">
         <div class="card-icon">👤</div>
         <div class="card-role">Espace personnel</div>
-        <div class="card-title">Espace<br>Patient</div>
-        <div class="card-desc">
-            Consultez votre niveau de risque, lisez 
-            les recommandations de votre médecin et 
-            suivez l'évolution de votre poids semaine après semaine.
-        </div>
+        <div class="card-title">Espace Patient</div>
+        <div class="card-desc">Consultez votre niveau de risque, lisez les recommandations de votre médecin et suivez l'évolution de votre poids semaine après semaine.</div>
         <ul class="card-features">
-            <li>Résultat & IMC personnalisé</li>
+            <li>Résultat &amp; IMC personnalisé</li>
             <li>Recommandations du médecin</li>
             <li>Suivi poids hebdomadaire</li>
             <li>Alertes automatiques</li>
         </ul>
     </div>
-
-</div>
-""", unsafe_allow_html=True)
-
-# ── Streamlit buttons (invisible but functional) ──────────────────────────────
-col_doc, col_pat = st.columns(2)
-
-with col_doc:
-    if st.button("🩺  Accéder — Espace Médecin", use_container_width=True, key="btn_doctor"):
-        st.switch_page("pages/doctor_login.py")
-
-with col_pat:
+    """, unsafe_allow_html=True)
     if st.button("👤  Accéder — Espace Patient", use_container_width=True, key="btn_patient"):
         st.switch_page("pages/patient_login.py")
 
