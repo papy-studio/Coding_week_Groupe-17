@@ -19,3 +19,6 @@ data/*
 # Modèles sauvegardés
 *.pkl
 *.joblib
+
+#modèles sauvegardés
+models/
