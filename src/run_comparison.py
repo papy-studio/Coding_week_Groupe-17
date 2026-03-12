@@ -1,12 +1,18 @@
 """
-Simple comparison runner - outputs results to text file
+Comparison runner - outputs results to text file
 """
 import os
 import sys
 import joblib
 
+# Get the project root directory (parent of src/)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, "data")
+OUTPUT_PATH = os.path.join(PROJECT_ROOT, "outputs")
+
 # Redirect output to file
-output_file = open("outputs/results.txt", "w")
+os.makedirs(OUTPUT_PATH, exist_ok=True)
+output_file = open(os.path.join(OUTPUT_PATH, "results.txt"), "w")
 
 class OutputLogger:
     def __init__(self, file_handle):
@@ -48,16 +54,16 @@ CLASSES = [
     'Overweight_Level_II'
 ]
 
-os.makedirs("outputs", exist_ok=True)
+os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 print("=" * 70)
 print("  LOADING DATA")
 print("=" * 70)
 
-X_train = pd.read_csv("data/X_train.csv")
-X_test  = pd.read_csv("data/X_test.csv")
-y_train = pd.read_csv("data/y_train.csv").squeeze()
-y_test  = pd.read_csv("data/y_test.csv").squeeze()
+X_train = pd.read_csv(os.path.join(DATA_PATH, "X_train.csv"))
+X_test  = pd.read_csv(os.path.join(DATA_PATH, "X_test.csv"))
+y_train = pd.read_csv(os.path.join(DATA_PATH, "y_train.csv")).squeeze()
+y_test  = pd.read_csv(os.path.join(DATA_PATH, "y_test.csv")).squeeze()
 
 X_test = X_test[X_train.columns]
 
@@ -83,7 +89,7 @@ results["LightGBM"] = {
     "roc_auc": roc_auc_score(y_test, y_prob, multi_class="ovr")
 }
 models["LightGBM"] = lgbm
-joblib.dump(lgbm, "outputs/lightgbm.pkl")
+joblib.dump(lgbm, os.path.join(OUTPUT_PATH, "lightgbm.pkl"))
 print("  Done")
 
 # 2. CatBoost
@@ -100,7 +106,7 @@ results["CatBoost"] = {
     "roc_auc": roc_auc_score(y_test, y_prob, multi_class="ovr", average="weighted")
 }
 models["CatBoost"] = cat
-joblib.dump(cat, "outputs/catboost.pkl")
+joblib.dump(cat, os.path.join(OUTPUT_PATH, "catboost.pkl"))
 print("  Done")
 
 # 3. XGBoost
@@ -117,7 +123,7 @@ results["XGBoost"] = {
     "roc_auc": roc_auc_score(y_test, y_prob, multi_class="ovr")
 }
 models["XGBoost"] = xgb
-joblib.dump(xgb, "outputs/xgboost.pkl")
+joblib.dump(xgb, os.path.join(OUTPUT_PATH, "xgboost.pkl"))
 print("  Done")
 
 # 4. Random Forest
@@ -134,7 +140,7 @@ results["Random Forest"] = {
     "roc_auc": roc_auc_score(y_test, y_prob, multi_class="ovr")
 }
 models["Random Forest"] = rf
-joblib.dump(rf, "outputs/random_forest.pkl")
+joblib.dump(rf, os.path.join(OUTPUT_PATH, "random_forest.pkl"))
 print("  Done")
 
 # Display metrics
@@ -158,7 +164,7 @@ print(f"  🏆 Best Model (ROC-AUC): {best_roc} ({results[best_roc]['roc_auc']:.
 
 # List saved files
 print("\n  Saved files:")
-for f in os.listdir("outputs"):
+for f in os.listdir(OUTPUT_PATH):
     print(f"    - {f}")
 
 output_file.close()
