@@ -1,4 +1,4 @@
-import pandas as pd
+import panda as pd 
 import plotly.express as px
 import streamlit as st
 from datetime import date
