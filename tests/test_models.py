@@ -2,8 +2,6 @@
 ╔══════════════════════════════════════════════════════════════╗
 ║     TESTS — LightGBM, CatBoost, XGBoost, Random Forest      ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Run: pytest tests/test_models.py -v                         ║
-╚══════════════════════════════════════════════════════════════╝
 """
 
 import pytest
@@ -101,22 +99,22 @@ def obese_patient():
 # ══════════════════════════════════════════════════════════════
 
 def test_lightgbm_file_exists():
-    assert os.path.exists("outputs/lightgbm.pkl"), "❌ lightgbm.pkl not found in outputs/"
+    assert os.path.exists("outputs/lightgbm.pkl"), "lightgbm.pkl not found in outputs/"
 
 def test_catboost_file_exists():
-    assert os.path.exists("outputs/catboost.pkl"), "❌ catboost.pkl not found in outputs/"
+    assert os.path.exists("outputs/catboost.pkl"), "catboost.pkl not found in outputs/"
 
 def test_xgboost_file_exists():
-    assert os.path.exists("outputs/xgboost.pkl"), "❌ xgboost.pkl not found in outputs/"
+    assert os.path.exists("outputs/xgboost.pkl"), "xgboost.pkl not found in outputs/"
 
 def test_random_forest_file_exists():
-    assert os.path.exists("outputs/random_forest.pkl"), "❌ random_forest.pkl not found in outputs/"
+    assert os.path.exists("outputs/random_forest.pkl"), "random_forest.pkl not found in outputs/"
 
 def test_data_files_exist():
-    assert os.path.exists("data/X_train.csv"), "❌ X_train.csv missing"
-    assert os.path.exists("data/X_test.csv"),  "❌ X_test.csv missing"
-    assert os.path.exists("data/y_train.csv"), "❌ y_train.csv missing"
-    assert os.path.exists("data/y_test.csv"),  "❌ y_test.csv missing"
+    assert os.path.exists("data/X_train.csv"), "X_train.csv missing"
+    assert os.path.exists("data/X_test.csv"),  "X_test.csv missing"
+    assert os.path.exists("data/y_train.csv"), "y_train.csv missing"
+    assert os.path.exists("data/y_test.csv"),  "y_test.csv missing"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -125,11 +123,11 @@ def test_data_files_exist():
 
 def test_no_missing_values_train():
     X_train = pd.read_csv("data/X_train.csv")
-    assert X_train.isnull().sum().sum() == 0, "❌ Missing values in X_train"
+    assert X_train.isnull().sum().sum() == 0, "Missing values in X_train"
 
 def test_no_missing_values_test():
     X_test = pd.read_csv("data/X_test.csv")
-    assert X_test.isnull().sum().sum() == 0, "❌ Missing values in X_test"
+    assert X_test.isnull().sum().sum() == 0, "Missing values in X_test"
 
 def test_correct_number_of_features():
     X_test = pd.read_csv("data/X_test.csv")
