@@ -1,11 +1,10 @@
-# app/pages/patient_login.py
 import streamlit as st
 import json
 from pathlib import Path
-
+ 
 st.set_page_config(page_title="Connexion Patient", page_icon="👤")
-
-# Design system (identique à avant)
+ 
+# Design system
 st.markdown("""
 <style>
     .stApp { background-color: #0B1628; }
@@ -28,13 +27,18 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 st.title("👤 Espace Patient")
 st.markdown("Connectez-vous pour accéder à votre espace personnel")
-
-# Chemin vers le fichier patients (créé par Membre 1 ou via script)
-patients_file = Path("data/patients/patients.json")
-
+ 
+# ✅ Chemin absolu basé sur la position du fichier
+# __file__ = app/pages/patient_login.py
+# .parent   = app/pages/
+# .parent   = app/
+# .parent   = Coding_week_Groupe-17/  (racine du projet)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+patients_file = BASE_DIR / "data" / "patients.json"
+ 
 # Vérifier si la base de données patients existe
 if not patients_file.exists():
     st.warning("""
@@ -43,13 +47,13 @@ if not patients_file.exists():
     Veuillez réessayer dans quelques instants.
     """)
     st.stop()
-
+ 
 # Formulaire de connexion
 with st.form("login_form"):
     username = st.text_input("Nom d'utilisateur", placeholder="ex: patient001")
     password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
     submitted = st.form_submit_button("Se connecter")
-    
+ 
     if submitted:
         if not username or not password:
             st.error("Veuillez remplir tous les champs")
@@ -57,10 +61,10 @@ with st.form("login_form"):
             try:
                 with open(patients_file, 'r', encoding='utf-8') as f:
                     patients = json.load(f)
-                
+ 
                 if username in patients and patients[username]["password"] == password:
                     patient_info = patients[username]
-                    
+ 
                     # Sauvegarder dans session_state
                     st.session_state["logged_in"] = True
                     st.session_state["role"] = "patient"
@@ -71,15 +75,18 @@ with st.form("login_form"):
                     st.session_state["patient_prenom"] = patient_info.get('prenom', '')
                     st.session_state["patient_taille"] = patient_info.get('taille')
                     st.session_state["medecin_referent"] = patient_info.get('medecin_referent')
-                    
+ 
                     st.success(f"Bienvenue, {st.session_state['display_name']} !")
-                    # Redirection vers la page profil (nom du fichier sans chemin)
-                    st.switch_page("patient_profile.py")
+                    # ✅ Chemin correct pour switch_page depuis app/pages/
+                    st.switch_page("pages/patient_profile.py")
                 else:
                     st.error("❌ Nom d'utilisateur ou mot de passe incorrect")
+ 
+            except json.JSONDecodeError:
+                st.error("❌ Erreur de lecture de la base de données. Fichier JSON invalide.")
             except Exception as e:
                 st.error(f"Erreur de connexion : {str(e)}")
-
+ 
 # Pied de page
 st.markdown("---")
 st.markdown(
