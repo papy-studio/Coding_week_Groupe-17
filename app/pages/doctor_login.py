@@ -255,7 +255,7 @@ with col:
             st.session_state["username"]     = username
             st.session_state["display_name"] = DOCTORS[username]["name"]
             st.success(f"Bienvenue, {DOCTORS[username]['name']} !")
-            st.switch_page("pages/doctor/dashboard.py")
+            st.switch_page("pages/doctor_dashboard.py")
         else:
             st.error("Identifiant ou mot de passe incorrect.")
 
