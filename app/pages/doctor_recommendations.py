@@ -17,11 +17,11 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor/login.py")
+    st.switch_page("pages/doctor_login.py")
 
 if "selected_patient_id" not in st.session_state:
     st.warning("Aucun patient sélectionné.")
-    st.switch_page("pages/doctor/dashboard.py")
+    st.switch_page("pages/doctor_dashboard.py")
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 RECORDS_DIR = "data/records"
@@ -343,8 +343,8 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.page_link("pages/doctor/dashboard.py",  label="🏠  Tableau de bord")
-    st.page_link("pages/doctor/data_entry.py", label="➕  Nouveau patient")
+    st.page_link("pages/doctor_dashboard.py",  label="🏠  Tableau de bord")
+    st.page_link("pages/doctor_data_entry.py", label="➕  Nouveau patient")
     st.markdown("<hr>", unsafe_allow_html=True)
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
@@ -481,4 +481,4 @@ if save_btn:
             st.error(f"Erreur lors de la sauvegarde : {e}")
 
 if back_btn:
-    st.switch_page("pages/doctor/result.py")
+    st.switch_page("pages/doctor_result.py")

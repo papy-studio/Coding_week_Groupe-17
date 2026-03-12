@@ -423,11 +423,11 @@ col_doc, col_pat = st.columns(2)
 
 with col_doc:
     if st.button("🩺  Accéder — Espace Médecin", use_container_width=True, key="btn_doctor"):
-        st.switch_page("pages/doctor/login.py")
+        st.switch_page("pages/doctor_login.py")
 
 with col_pat:
     if st.button("👤  Accéder — Espace Patient", use_container_width=True, key="btn_patient"):
-        st.switch_page("pages/patient/login.py")
+        st.switch_page("pages/patient_login.py")
 
 # ── Button styling ─────────────────────────────────────────────────────────────
 st.markdown("""

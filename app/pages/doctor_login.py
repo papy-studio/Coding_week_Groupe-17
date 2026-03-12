@@ -20,6 +20,7 @@ header[data-testid="stHeader"] { display: none !important; }
 """, unsafe_allow_html=True)
 
 # ── Load doctors from JSON ─────────────────────────────────────────────────────
+
 DOCTORS_PATH = "data/doctors.json"
 
 def load_doctors():
@@ -33,14 +34,26 @@ def load_doctors():
         with open(DOCTORS_PATH, "w") as f:
             json.dump(default, f, indent=2, ensure_ascii=False)
         return default
-    with open(DOCTORS_PATH, "r") as f:
-        return json.load(f)
+    
+    # Si le fichier existe, mais est vide ou mal formé
+    try:
+        with open(DOCTORS_PATH, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        # Réinitialiser avec les docteurs par défaut
+        default = {
+            "dr.martin": {"password": "medic123", "name": "Dr. Sophie Martin"},
+            "dr.hassan": {"password": "medic456", "name": "Dr. Karim Hassan"},
+        }
+        with open(DOCTORS_PATH, "w") as f:
+            json.dump(default, f, indent=2, ensure_ascii=False)
+        return default
 
 DOCTORS = load_doctors()
 
 # ── Redirect if already logged in as doctor ───────────────────────────────────
 if st.session_state.get("role") == "doctor":
-    st.switch_page("pages/doctor/dashboard.py")
+    st.switch_page("pages/doctor_dashboard.py")
 
 # ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""

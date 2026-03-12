@@ -19,7 +19,7 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor/login.py")
+    st.switch_page("pages/doctor_login.py")
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 PATIENTS_PATH = "data/patients.json"
@@ -302,8 +302,8 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.page_link("pages/doctor/dashboard.py",      label="🏠  Tableau de bord")
-    st.page_link("pages/doctor/data_entry.py",     label="➕  Nouveau patient")
+    st.page_link("pages/doctor_dashboard.py",      label="🏠  Tableau de bord")
+    st.page_link("pages/doctor_data_entry.py",     label="➕  Nouveau patient")
     st.markdown("<hr>", unsafe_allow_html=True)
 
     if st.button("🚪  Se déconnecter", use_container_width=True):
@@ -376,7 +376,7 @@ with col_search:
 
 with col_btn:
     if st.button("➕  Nouveau patient", use_container_width=True):
-        st.switch_page("pages/doctor/data_entry.py")
+        st.switch_page("pages/doctor_data_entry.py")
 
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 st.markdown('<div class="section-title">Liste des patients</div>', unsafe_allow_html=True)
@@ -465,13 +465,13 @@ else:
                         }
                         st.session_state["patient_data"]    = record.get("clinical_data", {})
                         st.session_state["prediction"]      = pred
-                        st.switch_page("pages/doctor/result.py")
+                        st.switch_page("pages/doctor_result.py")
                     else:
                         st.session_state["patient_info"] = {
                             "prenom": pdata.get("name", "").split()[0] if pdata.get("name") else "—",
                             "nom":    " ".join(pdata.get("name", "").split()[1:]) if pdata.get("name") else "—",
                         }
-                        st.switch_page("pages/doctor/data_entry.py")
+                        st.switch_page("pages/doctor_data_entry.py")
                 st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("<div style='height:2px; background:rgba(29,105,150,0.08); border-radius:2px;'></div>",

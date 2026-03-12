@@ -25,11 +25,11 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor/login.py")
+    st.switch_page("pages/doctor_login.py")
 
 if "patient_data" not in st.session_state or "patient_info" not in st.session_state:
     st.warning("Aucune donnée patient. Veuillez remplir le formulaire.")
-    st.switch_page("pages/doctor/data_entry.py")
+    st.switch_page("pages/doctor_data_entry.py")
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 MODEL_PATH   = "models/model.pkl"
@@ -232,8 +232,8 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.page_link("pages/doctor/dashboard.py",  label="🏠  Tableau de bord")
-    st.page_link("pages/doctor/data_entry.py", label="➕  Nouveau patient")
+    st.page_link("pages/doctor_dashboard.py",  label="🏠  Tableau de bord")
+    st.page_link("pages/doctor_data_entry.py", label="➕  Nouveau patient")
     st.markdown("<hr>", unsafe_allow_html=True)
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
@@ -485,9 +485,9 @@ if reco_btn:
         except Exception as e:
             st.error(f"Erreur lors de la sauvegarde : {e}")
             st.stop()
-    st.switch_page("pages/doctor/recommendations.py")
+    st.switch_page("pages/doctor_recommendations.py")
 
 if new_btn:
     for key in ["patient_data", "patient_info", "prediction", "patient_saved", "selected_patient_id"]:
         st.session_state.pop(key, None)
-    st.switch_page("pages/doctor/data_entry.py")
+    st.switch_page("pages/doctor_data_entry.py")
