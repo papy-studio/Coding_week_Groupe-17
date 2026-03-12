@@ -1,10 +1,9 @@
-# app/pages/patient_profile.py
 import streamlit as st
 import json
 from pathlib import Path
-
+ 
 st.set_page_config(page_title="Mon Profil", page_icon="📊")
-
+ 
 # Design system
 st.markdown("""
 <style>
@@ -45,22 +44,26 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Vérifier la connexion
+ 
+# ✅ Chemins absolus
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ 
+# ✅ Vérifier la connexion SANS switch_page direct (évite NoSessionContext)
 if not st.session_state.get("logged_in") or st.session_state.get("role") != "patient":
-    st.warning("Veuillez vous connecter")
-    st.switch_page("patient_login.py")
+    st.warning("Veuillez vous connecter pour accéder à cette page.")
+    if st.button("🔐 Aller à la connexion"):
+        st.switch_page("pages/patient_login.py")
     st.stop()
-
+ 
 # Titre
 st.title(f"📊 Bienvenue, {st.session_state.get('display_name', 'Patient')}")
-
+ 
 # Récupérer l'ID du patient
 patient_id = st.session_state.get("patient_id")
 if not patient_id:
     st.error("Erreur : ID patient non trouvé")
     st.stop()
-
+ 
 # Mapping des classes d'obésité
 class_mapping = {
     "Insufficient_Weight": {
@@ -99,28 +102,28 @@ class_mapping = {
         "conseil": "Prise en charge médicale urgente recommandée"
     }
 }
-
+ 
 # Chemins des fichiers
-record_file = Path(f"data/records/{patient_id}.json")
-patient_file = Path("data/patients/patients.json")
-
+record_file = BASE_DIR / "data" / "records" / f"{patient_id}.json"
+patients_file = BASE_DIR / "data" / "patients.json"
+ 
 # Charger les infos de base du patient
 patient_info = {}
-if patient_file.exists():
-    with open(patient_file, 'r', encoding='utf-8') as f:
+if patients_file.exists():
+    with open(patients_file, 'r', encoding='utf-8') as f:
         patients = json.load(f)
         patient_info = patients.get(patient_id, {})
-
+ 
 # Afficher les infos de base
 col1, col2, col3 = st.columns(3)
-
+ 
 with col1:
     st.markdown('<div class="metric-card">', unsafe_allow_html=True)
     st.markdown("### 📅 Inscription")
     date_inscription = patient_info.get('date_inscription', 'N/A')
     st.markdown(f"**{date_inscription}**")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 with col2:
     st.markdown('<div class="metric-card">', unsafe_allow_html=True)
     st.markdown("### 📏 Taille")
@@ -130,30 +133,30 @@ with col2:
     else:
         st.markdown("**N/A**")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 with col3:
     st.markdown('<div class="metric-card">', unsafe_allow_html=True)
     st.markdown("### 👨‍⚕️ Médecin")
     medecin = patient_info.get('medecin_referent', 'Non assigné')
     st.markdown(f"**{medecin}**")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # Vérifier si le dossier médical existe
 if record_file.exists():
     with open(record_file, 'r', encoding='utf-8') as f:
         record = json.load(f)
-    
+ 
     st.markdown("---")
     st.subheader("📋 Dernière évaluation médicale")
     st.caption(f"Date : {record.get('date_analyse', 'Date inconnue')}")
-    
+ 
     bmi = record.get('BMI')
     if bmi:
-        col1, col2, col3 = st.columns([1,2,1])
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown('<div class="metric-card">', unsafe_allow_html=True)
             st.markdown("### ⚖️ IMC")
-            
+ 
             if bmi < 18.5:
                 bmi_color = "#2196F3"
             elif bmi < 25:
@@ -162,13 +165,13 @@ if record_file.exists():
                 bmi_color = "#F4A261"
             else:
                 bmi_color = "#E05252"
-            
+ 
             st.markdown(f"<h1 style='color:{bmi_color}; margin:0;'>{bmi:.1f}</h1>", unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
-    
+ 
     st.markdown("---")
     st.subheader("🎯 Niveau de risque évalué")
-    
+ 
     prediction = record.get('prediction')
     if prediction in class_mapping:
         info = class_mapping[prediction]
@@ -180,10 +183,10 @@ if record_file.exists():
             💡 {info['conseil']}
         </p>
         """, unsafe_allow_html=True)
-    
+ 
     st.markdown("---")
     st.subheader("📋 Recommandations de votre médecin")
-    
+ 
     recommendations = record.get('recommendations', '')
     if recommendations and recommendations.strip():
         st.markdown(f"""
@@ -207,21 +210,20 @@ else:
         </p>
     </div>
     """, unsafe_allow_html=True)
-
+ 
 # Boutons de navigation
 st.markdown("---")
 col1, col2 = st.columns(2)
-
+ 
 with col1:
     if st.button("📈 Suivi de poids", use_container_width=True):
-        st.switch_page("patient_tracking.py")  # Nom du fichier de suivi
-
+        st.switch_page("pages/patient_tracking.py")
+ 
 with col2:
     if st.button("🚪 Se déconnecter", use_container_width=True):
-        for key in ['logged_in', 'role', 'username', 'patient_id', 
-                   'display_name', 'patient_nom', 'patient_prenom']:
+        for key in ['logged_in', 'role', 'username', 'patient_id',
+                    'display_name', 'patient_nom', 'patient_prenom']:
             if key in st.session_state:
                 del st.session_state[key]
-        st.switch_page("home.py")  # Retour à l'accueil
-
-        
+        st.switch_page("pages/home.py")
+ 
