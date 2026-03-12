@@ -476,3 +476,9 @@ else:
 
             st.markdown("<div style='height:2px; background:rgba(29,105,150,0.08); border-radius:2px;'></div>",
                         unsafe_allow_html=True)
+col1, col2 = st.columns([3,1])
+with col1:
+    st.title("👨‍⚕️ Tableau de bord")
+with col2:
+    if st.button("➕ Nouveau patient", use_container_width=True):
+        st.switch_page("doctor_create_patient.py")

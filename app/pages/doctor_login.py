@@ -265,3 +265,4 @@ with col:
         Toutes les données sont confidentielles
     </div>
     """, unsafe_allow_html=True)
+st.markdown("Pas encore de compte ? [S'inscrire](doctor_register.py)")
