@@ -17,7 +17,7 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor/login.py")
+    st.switch_page("pages/doctor_login.py")
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 PATIENTS_PATH = "data/patients.json"
@@ -216,8 +216,8 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.page_link("pages/doctor/dashboard.py",  label="🏠  Tableau de bord")
-    st.page_link("pages/doctor/data_entry.py", label="➕  Nouveau patient")
+    st.page_link("pages/doctor_dashboard.py",  label="🏠  Tableau de bord")
+    st.page_link("pages/doctor_data_entry.py", label="➕  Nouveau patient")
     st.markdown("<hr>", unsafe_allow_html=True)
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
@@ -449,4 +449,4 @@ if submit:
         st.session_state.pop("patient_saved", None)
 
         st.success(f"✅ Dossier de {full_name} créé. Lancement de l'analyse…")
-        st.switch_page("pages/doctor/result.py")
+        st.switch_page("pages/doctor_result.py")
