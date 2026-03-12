@@ -1,7 +1,8 @@
 import streamlit as st
 import json
 import os
-
+from pathlib import Path
+ 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="MediObes · Nouveau Patient",
@@ -9,7 +10,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
+ 
 # ── Auth guard ─────────────────────────────────────────────────────────────────
 if not st.session_state.get("logged_in") or st.session_state.get("role") != "doctor":
     st.markdown("""
@@ -17,33 +18,40 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor_login.py")
-
-# ── Paths ──────────────────────────────────────────────────────────────────────
-PATIENTS_PATH = "data/patients.json"
-
+    st.warning("Accès réservé aux médecins connectés.")
+    if st.button("🔐 Se connecter"):
+        st.switch_page("pages/doctor_login.py")
+    st.stop()
+ 
+# ── Chemins absolus ────────────────────────────────────────────────────────────
+BASE_DIR      = Path(__file__).resolve().parent.parent.parent
+PATIENTS_PATH = BASE_DIR / "data" / "patients.json"
+PATIENTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+ 
 def load_patients():
-    if not os.path.exists(PATIENTS_PATH):
+    if not PATIENTS_PATH.exists():
         return {}
-    with open(PATIENTS_PATH, "r") as f:
-        return json.load(f)
-
+    try:
+        with open(PATIENTS_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {}
+ 
 def save_patient(patient_id, name, doctor_id, password="change_me"):
-    os.makedirs("data", exist_ok=True)
     patients = load_patients()
     patients[patient_id] = {
         "password":  password,
         "name":      name,
         "doctor_id": doctor_id,
     }
-    with open(PATIENTS_PATH, "w") as f:
+    with open(PATIENTS_PATH, "w", encoding="utf-8") as f:
         json.dump(patients, f, indent=2, ensure_ascii=False)
-
+ 
 # ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
-
+ 
 html, body, [data-testid="stAppViewContainer"] {
     font-family: 'DM Sans', sans-serif;
     background: #0B1628;
@@ -57,8 +65,7 @@ html, body, [data-testid="stAppViewContainer"] {
     pointer-events: none; z-index: 0;
 }
 [data-testid="stMain"] { position: relative; z-index: 1; }
-
-/* ── Sidebar ── */
+ 
 [data-testid="stSidebar"] {
     background: #0D1E30 !important;
     border-right: 1px solid rgba(29,105,150,0.15) !important;
@@ -90,14 +97,12 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stSidebar"] [data-testid="stButton"] > button:hover {
     background: rgba(29,105,150,0.22) !important; color: #7EC8E3 !important; transform: none !important;
 }
-
-/* ── Page header ── */
+ 
 .page-header { margin-bottom: 28px; }
 .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #1D4A6A; margin-bottom: 6px; }
 .page-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.8px; margin-bottom: 4px; }
 .page-sub { font-size: 14px; color: #1D3A50; font-weight: 300; }
-
-/* ── Section cards ── */
+ 
 .section-card {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
@@ -118,20 +123,18 @@ html, body, [data-testid="stAppViewContainer"] {
     background: linear-gradient(to right, rgba(29,105,150,0.3), transparent);
     margin-left: 8px;
 }
-
-/* ── Field labels ── */
+ 
 .field-label {
     font-size: 11.5px; font-weight: 500; color: #2A5A7A;
     text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px;
 }
 .req { color: #E05252; margin-left: 2px; }
-
-/* ── Inputs ── */
+ 
 [data-testid="stTextInput"] label,
 [data-testid="stNumberInput"] label,
 [data-testid="stSelectbox"] label,
 [data-testid="stSlider"] label { display: none; }
-
+ 
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {
     background: rgba(255,255,255,0.05) !important;
@@ -148,14 +151,13 @@ html, body, [data-testid="stAppViewContainer"] {
     box-shadow: 0 0 0 3px rgba(29,105,150,0.15) !important;
     background: rgba(29,105,150,0.08) !important;
 }
-
+ 
 [data-testid="stSelectbox"] > div > div {
     background: rgba(255,255,255,0.05) !important;
     border: 1.5px solid rgba(29,105,150,0.22) !important;
     border-radius: 10px !important; color: #FFFFFF !important;
 }
-
-/* ── IMC badge ── */
+ 
 .imc-badge {
     display: inline-flex; align-items: center; gap: 10px;
     background: rgba(29,105,150,0.10);
@@ -165,8 +167,7 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 .imc-label { font-size: 12.5px; color: #4A7A9A; }
 .imc-value { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; }
-
-/* ── Tip box ── */
+ 
 .tip-box {
     background: rgba(29,105,150,0.08);
     border-left: 3px solid #1D6996;
@@ -174,8 +175,7 @@ html, body, [data-testid="stAppViewContainer"] {
     padding: 11px 16px; font-size: 13px;
     color: #4A7A9A; margin-bottom: 24px;
 }
-
-/* ── Submit button ── */
+ 
 .submit-row [data-testid="stButton"] > button {
     background: linear-gradient(135deg, #1D6996, #155a7a) !important;
     color: #FFFFFF !important; border: none !important;
@@ -189,18 +189,16 @@ html, body, [data-testid="stAppViewContainer"] {
     transform: translateY(-1px) !important;
     box-shadow: 0 8px 28px rgba(29,105,150,0.45) !important;
 }
-
-/* ── Caption ── */
+ 
 [data-testid="stCaptionContainer"] p { color: #1D3A50 !important; font-size: 11.5px !important; }
-
-/* ── Slider ── */
+ 
 [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
     background: #1D6996 !important;
     border-color: #7EC8E3 !important;
 }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
@@ -222,13 +220,12 @@ with st.sidebar:
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
         st.switch_page("pages/home.py")
-
+ 
 # ── Page header ───────────────────────────────────────────────────────────────
-# Détecter si on vient du dashboard avec un patient déjà sélectionné
-existing_patient_id   = st.session_state.get("selected_patient_id")
-prefill_patient_info  = st.session_state.get("patient_info", {})
-is_edit_mode          = bool(existing_patient_id and prefill_patient_info)
-
+existing_patient_id  = st.session_state.get("selected_patient_id")
+prefill_patient_info = st.session_state.get("patient_info", {})
+is_edit_mode         = bool(existing_patient_id and prefill_patient_info)
+ 
 st.markdown(f"""
 <div class="page-header">
     <div class="page-eyebrow">Espace Médecin · Saisie clinique</div>
@@ -236,26 +233,25 @@ st.markdown(f"""
     <div class="page-sub">
         {'Mise à jour des données cliniques de ' + prefill_patient_info.get('prenom','') + ' ' + prefill_patient_info.get('nom','')
          if is_edit_mode else
-         'Remplissez les informations du patient pour lancer l\'estimation du risque'}
+         "Remplissez les informations du patient pour lancer l'estimation du risque"}
     </div>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 st.markdown("""
 <div class="tip-box">
     💡 Tous les champs marqués <span style="color:#E05252">*</span> sont obligatoires.
     La prédiction et les explications SHAP seront générées à la soumission.
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 1 — Identité du patient
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card" style="--accent: linear-gradient(to right,#1D6996,#7EC8E3);">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">👤 &nbsp;Identité du patient</div>', unsafe_allow_html=True)
-
+ 
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.markdown('<div class="field-label">Prénom <span class="req">*</span></div>', unsafe_allow_html=True)
     first_name = st.text_input("prenom", placeholder="Prénom",
@@ -268,13 +264,12 @@ with col2:
                               label_visibility="collapsed")
 with col3:
     st.markdown('<div class="field-label">ID Patient <span class="req">*</span></div>', unsafe_allow_html=True)
-    suggested_id = existing_patient_id or ""
     patient_id_input = st.text_input("patient_id",
                                      placeholder="ex: patient001",
-                                     value=suggested_id,
+                                     value=existing_patient_id or "",
                                      disabled=is_edit_mode,
                                      label_visibility="collapsed")
-
+ 
 col4, col5, col6 = st.columns(3)
 with col4:
     st.markdown('<div class="field-label">Sexe <span class="req">*</span></div>', unsafe_allow_html=True)
@@ -288,15 +283,15 @@ with col6:
                                 placeholder="Laisser vide = 'change_me'",
                                 type="password",
                                 label_visibility="collapsed")
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 2 — Données biométriques
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card" style="--accent: linear-gradient(to right,#1D6996,#7EC8E3);">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">📏 &nbsp;Données biométriques</div>', unsafe_allow_html=True)
-
+ 
 col1, col2 = st.columns(2)
 with col1:
     st.markdown('<div class="field-label">Taille (m) <span class="req">*</span></div>', unsafe_allow_html=True)
@@ -304,8 +299,7 @@ with col1:
 with col2:
     st.markdown('<div class="field-label">Poids (kg) <span class="req">*</span></div>', unsafe_allow_html=True)
     weight = st.number_input("poids", min_value=30.0, max_value=250.0, value=70.0, step=0.5, format="%.1f", label_visibility="collapsed")
-
-# IMC temps réel
+ 
 if height > 0:
     bmi = weight / (height ** 2)
     bmi_color = "#52B788" if bmi < 25 else "#F4A261" if bmi < 30 else "#E76F51" if bmi < 35 else "#E05252"
@@ -317,74 +311,74 @@ if height > 0:
         <span style="font-size:12px; color:{bmi_color}; font-weight:500;">kg/m² — {bmi_label}</span>
     </div>
     """, unsafe_allow_html=True)
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 3 — Habitudes alimentaires
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card" style="--accent: linear-gradient(to right,#1D6996,#52B788);">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🍽️ &nbsp;Habitudes alimentaires</div>', unsafe_allow_html=True)
-
+ 
 col1, col2 = st.columns(2)
 with col1:
     st.markdown('<div class="field-label">Antécédents familiaux d\'obésité <span class="req">*</span></div>', unsafe_allow_html=True)
     family_history = st.selectbox("family", ["Oui", "Non"], label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Aliments très caloriques fréquents (FAVC)</div>', unsafe_allow_html=True)
     favc = st.selectbox("favc", ["Oui", "Non"], label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Légumes par repas (FCVC)</div>', unsafe_allow_html=True)
     st.caption("1 = Jamais · 2 = Parfois · 3 = Toujours")
     fcvc = st.slider("fcvc", 1.0, 3.0, 2.0, 0.1, label_visibility="collapsed")
-
+ 
 with col2:
     st.markdown('<div class="field-label">Repas principaux par jour (NCP)</div>', unsafe_allow_html=True)
     st.caption("1 à 4 repas par jour")
     ncp = st.slider("ncp", 1.0, 4.0, 3.0, 0.1, label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Grignotage entre les repas (CAEC)</div>', unsafe_allow_html=True)
     caec = st.selectbox("caec", ["Non", "Parfois", "Fréquemment", "Toujours"], label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Surveillance des calories (SCC)</div>', unsafe_allow_html=True)
     scc = st.selectbox("scc", ["Oui", "Non"], label_visibility="collapsed")
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 4 — Hygiène de vie
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card" style="--accent: linear-gradient(to right,#52B788,#7EC8E3);">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🏃 &nbsp;Hygiène de vie & activité physique</div>', unsafe_allow_html=True)
-
+ 
 col1, col2 = st.columns(2)
 with col1:
     st.markdown('<div class="field-label">Tabagisme</div>', unsafe_allow_html=True)
     smoke = st.selectbox("smoke", ["Non", "Oui"], label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Eau consommée par jour (CH2O)</div>', unsafe_allow_html=True)
     st.caption("1 = <1L · 2 = 1–2L · 3 = >2L")
     ch2o = st.slider("ch2o", 1.0, 3.0, 2.0, 0.1, label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Activité physique hebdomadaire (FAF)</div>', unsafe_allow_html=True)
     st.caption("0 = Aucune · 1 = 1-2j · 2 = 3-4j · 3 = Quotidien")
     faf = st.slider("faf", 0.0, 3.0, 1.0, 0.1, label_visibility="collapsed")
-
+ 
 with col2:
     st.markdown('<div class="field-label">Temps sur écrans / jour (TUE)</div>', unsafe_allow_html=True)
     st.caption("0 = 0-2h · 1 = 3-5h · 2 = >5h")
     tue = st.slider("tue", 0.0, 2.0, 1.0, 0.1, label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Consommation d\'alcool (CALC)</div>', unsafe_allow_html=True)
     calc = st.selectbox("calc", ["Non", "Parfois", "Fréquemment", "Toujours"], label_visibility="collapsed")
-
+ 
     st.markdown('<div class="field-label" style="margin-top:16px;">Transport principal (MTRANS)</div>', unsafe_allow_html=True)
     mtrans = st.selectbox("mtrans",
         ["Transports en commun", "Voiture", "Vélo", "Moto", "À pied"],
         label_visibility="collapsed")
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # SUBMIT
 # ══════════════════════════════════════════════════════════════════════════════
@@ -393,36 +387,32 @@ col_btn, _ = st.columns([2, 5])
 with col_btn:
     submit = st.button("🔍  Lancer l'analyse", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 if submit:
-    # ── Validation ────────────────────────────────────────────────────────────
     errors = []
     if not first_name.strip(): errors.append("Le prénom est obligatoire.")
     if not last_name.strip():  errors.append("Le nom est obligatoire.")
     if not patient_id_input.strip(): errors.append("L'ID patient est obligatoire.")
-
+ 
     if errors:
         for e in errors:
             st.error(f"⚠️ {e}")
     else:
-        # ── Encodage ──────────────────────────────────────────────────────────
         caec_map   = {"Non": 0, "Parfois": 1, "Fréquemment": 2, "Toujours": 3}
         calc_map   = {"Non": 0, "Parfois": 1, "Fréquemment": 2, "Toujours": 3}
         mtrans_map = {"Voiture": 0, "Vélo": 1, "Moto": 2, "Transports en commun": 3, "À pied": 4}
-
+ 
         patient_id = patient_id_input.strip()
         full_name  = f"{first_name.strip()} {last_name.strip()}"
-
-        # ── Enregistrer dans patients.json ────────────────────────────────────
+ 
         pwd = patient_pwd.strip() if patient_pwd.strip() else "change_me"
         save_patient(
-            patient_id  = patient_id,
-            name        = full_name,
-            doctor_id   = st.session_state.get("username"),
-            password    = pwd,
+            patient_id = patient_id,
+            name       = full_name,
+            doctor_id  = st.session_state.get("username"),
+            password   = pwd,
         )
-
-        # ── Stocker dans session_state ────────────────────────────────────────
+ 
         st.session_state["selected_patient_id"] = patient_id
         st.session_state["patient_info"] = {
             "prenom": first_name.strip(),
@@ -447,6 +437,6 @@ if submit:
             "MTRANS":                         mtrans_map[mtrans],
         }
         st.session_state.pop("patient_saved", None)
-
+ 
         st.success(f"✅ Dossier de {full_name} créé. Lancement de l'analyse…")
         st.switch_page("pages/doctor_result.py")

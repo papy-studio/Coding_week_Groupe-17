@@ -6,35 +6,50 @@ import shap
 import matplotlib
 import matplotlib.pyplot as plt
 import json
-import os
+from pathlib import Path
 from datetime import datetime
-
+ 
 matplotlib.use("Agg")
-
-# ── Page config ────────────────────────────────────────────────────────────────
+ 
 st.set_page_config(
     page_title="MediObes · Résultat",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
+ 
 # ── Auth guard ─────────────────────────────────────────────────────────────────
 if not st.session_state.get("logged_in") or st.session_state.get("role") != "doctor":
     st.markdown("""<style>
         [data-testid="stSidebar"],[data-testid="collapsedControl"],
         header[data-testid="stHeader"]{ display:none !important; }
     </style>""", unsafe_allow_html=True)
-    st.switch_page("pages/doctor_login.py")
-
+    st.warning("Accès réservé aux médecins connectés.")
+    if st.button("🔐 Se connecter"):
+        st.switch_page("pages/doctor_login.py")
+    st.stop()
+ 
 if "patient_data" not in st.session_state or "patient_info" not in st.session_state:
     st.warning("Aucune donnée patient. Veuillez remplir le formulaire.")
-    st.switch_page("pages/doctor_data_entry.py")
-
+    if st.button("← Retour à la saisie", key="guard_back"):
+        st.switch_page("pages/doctor_data_entry.py")
+    st.stop()
+ 
+# Vérifier que les clés essentielles existent dans patient_data
+_pd = st.session_state.get("patient_data", {})
+if "Weight" not in _pd or "Height" not in _pd:
+    st.warning("Données patient incomplètes. Veuillez remplir le formulaire.")
+    if st.button("← Retour à la saisie", key="guard_back2"):
+        st.switch_page("pages/doctor_data_entry.py")
+    st.stop()
+ 
+# ── Chemins absolus ────────────────────────────────────────────────────────────
+BASE_DIR    = Path(__file__).resolve().parent.parent.parent
+MODEL_PATH  = BASE_DIR / "models" / "model.pkl"
+RECORDS_DIR = BASE_DIR / "data" / "records"
+RECORDS_DIR.mkdir(parents=True, exist_ok=True)
+ 
 # ── Constants ──────────────────────────────────────────────────────────────────
-MODEL_PATH   = "models/model.pkl"
-RECORDS_DIR  = "data/records"
-
 OBESITY_LABELS = {
     0: "Insufficient_Weight", 1: "Normal_Weight",
     2: "Obesity_Type_I",      3: "Obesity_Type_II",
@@ -75,12 +90,12 @@ FEATURE_LABELS_FR = {
     "SMOKE": "Tabagisme", "CH2O": "Eau/jour", "SCC": "Surveillance calories",
     "FAF": "Activité physique", "TUE": "Temps écran", "CALC": "Alcool", "MTRANS": "Transport",
 }
-
+ 
 # ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
-
+ 
 html, body, [data-testid="stAppViewContainer"] {
     font-family: 'DM Sans', sans-serif; background: #0B1628;
 }
@@ -92,8 +107,6 @@ html, body, [data-testid="stAppViewContainer"] {
     pointer-events: none; z-index: 0;
 }
 [data-testid="stMain"] { position: relative; z-index: 1; }
-
-/* ── Sidebar ── */
 [data-testid="stSidebar"] { background: #0D1E30 !important; border-right: 1px solid rgba(29,105,150,0.15) !important; }
 [data-testid="stSidebar"] * { color: #4A7A9A !important; }
 [data-testid="stSidebar"] hr { border-color: rgba(29,105,150,0.15) !important; margin: 14px 0; }
@@ -106,118 +119,41 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stSidebar"] [data-testid="stButton"] > button {
     background: rgba(29,105,150,0.12) !important; color: #4A7A9A !important;
     border: 1px solid rgba(29,105,150,0.20) !important; border-radius: 8px !important;
-    font-family: 'DM Sans', sans-serif !important; font-size: 13px !important;
-    box-shadow: none !important; transition: background 0.2s !important;
+    font-size: 13px !important; box-shadow: none !important;
 }
 [data-testid="stSidebar"] [data-testid="stButton"] > button:hover {
     background: rgba(29,105,150,0.22) !important; color: #7EC8E3 !important; transform: none !important;
 }
-
-/* ── Page header ── */
 .page-header { margin-bottom: 28px; }
 .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #1D4A6A; margin-bottom: 6px; }
 .page-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.8px; margin-bottom: 4px; }
 .page-sub { font-size: 14px; color: #1D3A50; font-weight: 300; }
-
-/* ── Result card ── */
-.result-card {
-    border-radius: 18px; padding: 32px 36px; margin-bottom: 20px;
-    position: relative; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-.result-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--accent-color);
-}
-.result-label-small {
-    font-size: 10.5px; font-weight: 500; text-transform: uppercase;
-    letter-spacing: 1.2px; margin-bottom: 8px; opacity: 0.6;
-}
-.result-label-main {
-    font-family: 'Playfair Display', serif;
-    font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px;
-}
+.result-card { border-radius: 18px; padding: 32px 36px; margin-bottom: 20px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+.result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color); }
+.result-label-small { font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; opacity: 0.6; }
+.result-label-main { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
 .result-advice { font-size: 13.5px; line-height: 1.7; max-width: 520px; opacity: 0.8; }
-
-/* ── Proba bars ── */
 .proba-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 12.5px; }
 .proba-label { width: 190px; color: #4A7A9A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .proba-bar-bg { flex: 1; background: rgba(255,255,255,0.06); border-radius: 6px; height: 8px; }
-.proba-bar-fill { height: 8px; border-radius: 6px; transition: width 0.6s ease; }
+.proba-bar-fill { height: 8px; border-radius: 6px; }
 .proba-value { width: 42px; text-align: right; font-weight: 500; color: #7EC8E3; font-size: 11.5px; }
-
-/* ── Section card ── */
-.section-card {
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px; padding: 28px 32px; margin-bottom: 20px;
-    position: relative; overflow: hidden;
-}
-.section-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(to right, #1D6996, #7EC8E3);
-}
-.section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 17px; color: #7EC8E3; margin-bottom: 20px;
-    display: flex; align-items: center; gap: 8px;
-}
-.section-title::after {
-    content: ''; flex: 1; height: 1px;
-    background: linear-gradient(to right, rgba(29,105,150,0.3), transparent); margin-left: 8px;
-}
-
-/* ── Patient chips ── */
-.patient-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(29,105,150,0.12); border: 1px solid rgba(29,105,150,0.25);
-    border-radius: 20px; padding: 5px 14px;
-    font-size: 12.5px; color: #7EC8E3; margin-right: 8px; margin-bottom: 8px;
-}
-
-/* ── Save button ── */
-.save-btn [data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #52B788, #3d9e70) !important;
-    color: #FFFFFF !important; border: none !important;
-    border-radius: 10px !important; padding: 13px 0 !important;
-    font-family: 'DM Sans', sans-serif !important; font-size: 14.5px !important;
-    font-weight: 500 !important; box-shadow: 0 4px 16px rgba(82,183,136,0.30) !important;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-.save-btn [data-testid="stButton"] > button:hover {
-    transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(82,183,136,0.40) !important;
-}
-
-/* ── Reco button ── */
-.reco-btn [data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #1D6996, #155a7a) !important;
-    color: #FFFFFF !important; border: none !important;
-    border-radius: 10px !important; padding: 13px 0 !important;
-    font-family: 'DM Sans', sans-serif !important; font-size: 14.5px !important;
-    font-weight: 500 !important; box-shadow: 0 4px 16px rgba(29,105,150,0.30) !important;
-}
-.reco-btn [data-testid="stButton"] > button:hover {
-    transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(29,105,150,0.40) !important;
-}
-
-/* ── New patient button ── */
-.new-btn [data-testid="stButton"] > button {
-    background: transparent !important; color: #4A7A9A !important;
-    border: 1px solid rgba(29,105,150,0.30) !important;
-    border-radius: 10px !important; padding: 12px 0 !important;
-    font-family: 'DM Sans', sans-serif !important; font-size: 14px !important;
-    box-shadow: none !important;
-}
-.new-btn [data-testid="stButton"] > button:hover {
-    background: rgba(29,105,150,0.10) !important; color: #7EC8E3 !important; transform: none !important;
-}
-
-/* ── SHAP plot background ── */
-[data-testid="stImage"] { border-radius: 12px; overflow: hidden; }
+.section-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 28px 32px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.section-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, #1D6996, #7EC8E3); }
+.section-title { font-family: 'Playfair Display', serif; font-size: 17px; color: #7EC8E3; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(29,105,150,0.3), transparent); margin-left: 8px; }
+.patient-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(29,105,150,0.12); border: 1px solid rgba(29,105,150,0.25); border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #7EC8E3; margin-right: 8px; margin-bottom: 8px; }
+.save-btn [data-testid="stButton"] > button { background: linear-gradient(135deg, #52B788, #3d9e70) !important; color: #FFFFFF !important; border: none !important; border-radius: 10px !important; padding: 13px 0 !important; font-size: 14.5px !important; font-weight: 500 !important; box-shadow: 0 4px 16px rgba(82,183,136,0.30) !important; }
+.save-btn [data-testid="stButton"] > button:hover { transform: translateY(-1px) !important; }
+.reco-btn [data-testid="stButton"] > button { background: linear-gradient(135deg, #1D6996, #155a7a) !important; color: #FFFFFF !important; border: none !important; border-radius: 10px !important; padding: 13px 0 !important; font-size: 14.5px !important; font-weight: 500 !important; box-shadow: 0 4px 16px rgba(29,105,150,0.30) !important; }
+.reco-btn [data-testid="stButton"] > button:hover { transform: translateY(-1px) !important; }
+.new-btn [data-testid="stButton"] > button { background: transparent !important; color: #4A7A9A !important; border: 1px solid rgba(29,105,150,0.30) !important; border-radius: 10px !important; padding: 12px 0 !important; font-size: 14px !important; box-shadow: none !important; }
+.new-btn [data-testid="stButton"] > button:hover { background: rgba(29,105,150,0.10) !important; color: #7EC8E3 !important; transform: none !important; }
 [data-testid="stCaptionContainer"] p { color: #1D3A50 !important; font-size: 11.5px !important; }
 </style>
 """, unsafe_allow_html=True)
-
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+ 
+# ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
     <div class="sb-logo">Medi<span>Obes</span></div>
@@ -238,25 +174,25 @@ with st.sidebar:
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
         st.switch_page("pages/home.py")
-
+ 
 # ── Load model ─────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_model():
-    if not os.path.exists(MODEL_PATH):
+    if not MODEL_PATH.exists():
         return None
     return joblib.load(MODEL_PATH)
-
+ 
 model = load_model()
-
+ 
 # ── Patient data ───────────────────────────────────────────────────────────────
-patient_info = st.session_state["patient_info"]
-patient_data = st.session_state["patient_data"]
+patient_info = st.session_state.get("patient_info", {})
+patient_data = st.session_state.get("patient_data", {})
 patient_id   = st.session_state.get("selected_patient_id", "unknown")
 df_input     = pd.DataFrame([patient_data])
-prenom       = patient_info["prenom"]
-nom          = patient_info["nom"]
-bmi_val      = patient_data["Weight"] / (patient_data["Height"] ** 2)
-
+prenom = patient_info.get("prenom", "")
+nom = patient_info.get("nom", "")
+bmi_val      = patient_data.get("Weight", 70) / (patient_data.get("Height", 1.70) ** 2)
+ 
 # ── Page header ────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="page-header">
@@ -268,32 +204,36 @@ st.markdown(f"""
     </div>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # ── Model check ────────────────────────────────────────────────────────────────
 if model is None:
     st.error("⚠️ Modèle introuvable — vérifiez que `models/model.pkl` existe.")
     st.info("Lancez `python src/train_model.py` pour générer le modèle.")
     st.stop()
-
+ 
 # ── Prediction ─────────────────────────────────────────────────────────────────
 prediction_enc = model.predict(df_input)[0]
 probas         = model.predict_proba(df_input)[0]
 classes        = model.classes_
-
+ 
 pred_label = OBESITY_LABELS.get(int(prediction_enc), str(prediction_enc)) \
              if isinstance(prediction_enc, (int, np.integer)) else str(prediction_enc)
-
+ 
 pred_label_fr = LABEL_FR.get(pred_label, pred_label)
 accent, bg    = LABEL_COLOR.get(pred_label, ("#1D6996", "rgba(29,105,150,0.12)"))
 advice        = LABEL_ADVICE.get(pred_label, "")
-
-st.session_state["prediction"] = pred_label
-
+ 
+# ✅ Stocker toutes les clés nécessaires pour doctor_recommendations.py
+st.session_state["prediction"]            = pred_label
+st.session_state["prediction_label"]      = pred_label
+st.session_state["prediction_confidence"] = float(probas.max() * 100)
+st.session_state["prediction_bmi"]        = round(bmi_val, 2)
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # BLOC 1 — Résultat + Probabilités
 # ══════════════════════════════════════════════════════════════════════════════
 col_res, col_proba = st.columns([1.1, 1])
-
+ 
 with col_res:
     st.markdown(f"""
     <div class="result-card" style="background:{bg}; --accent-color:{accent};">
@@ -316,24 +256,24 @@ with col_res:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
+ 
 with col_proba:
     st.markdown('<div class="section-card" style="padding:24px 28px;">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">📊 &nbsp;Probabilités</div>', unsafe_allow_html=True)
     sorted_idx = np.argsort(probas)[::-1]
     for i in sorted_idx:
-        cls_raw    = classes[i]
-        cls_str    = OBESITY_LABELS.get(int(cls_raw), str(cls_raw)) \
-                     if isinstance(cls_raw, (int, np.integer)) else str(cls_raw)
-        cls_fr     = LABEL_FR.get(cls_str, cls_str)
-        pct        = probas[i] * 100
-        c, _       = LABEL_COLOR.get(cls_str, ("#1D6996", ""))
-        is_pred    = cls_str == pred_label
-        fw         = "600" if is_pred else "400"
-        label_color = "#FFFFFF" if is_pred else "#4A7A9A"
+        cls_raw  = classes[i]
+        cls_str  = OBESITY_LABELS.get(int(cls_raw), str(cls_raw)) \
+                   if isinstance(cls_raw, (int, np.integer)) else str(cls_raw)
+        cls_fr   = LABEL_FR.get(cls_str, cls_str)
+        pct      = probas[i] * 100
+        c, _     = LABEL_COLOR.get(cls_str, ("#1D6996", ""))
+        is_pred  = cls_str == pred_label
+        fw       = "600" if is_pred else "400"
+        lc       = "#FFFFFF" if is_pred else "#4A7A9A"
         st.markdown(f"""
         <div class="proba-row">
-            <div class="proba-label" style="font-weight:{fw}; color:{label_color};">{cls_fr}</div>
+            <div class="proba-label" style="font-weight:{fw}; color:{lc};">{cls_fr}</div>
             <div class="proba-bar-bg">
                 <div class="proba-bar-fill" style="width:{pct:.1f}%; background:{c};"></div>
             </div>
@@ -341,17 +281,17 @@ with col_proba:
         </div>
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # BLOC 2 — SHAP
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🔍 &nbsp;Explication SHAP — Facteurs influençant la prédiction</div>', unsafe_allow_html=True)
-
+ 
 try:
     explainer   = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(df_input)
-
+ 
     if isinstance(shap_values, list):
         class_list = list(classes)
         try:    pred_idx = class_list.index(prediction_enc)
@@ -359,30 +299,26 @@ try:
         shap_vals_pred = shap_values[pred_idx][0]
     else:
         shap_vals_pred = shap_values[0]
-
+ 
     feature_names_fr = [FEATURE_LABELS_FR.get(f, f) for f in df_input.columns]
     sorted_shap_idx  = np.argsort(np.abs(shap_vals_pred))[::-1][:10]
     vals   = shap_vals_pred[sorted_shap_idx]
     labels = [feature_names_fr[i] for i in sorted_shap_idx]
     colors = [accent if v > 0 else "#2A4A5A" for v in vals]
-
+ 
     fig, ax = plt.subplots(figsize=(9, 5))
     fig.patch.set_facecolor("#0D1E30")
     ax.set_facecolor("#0D1E30")
-
     ax.barh(labels[::-1], vals[::-1], color=colors[::-1], height=0.55, edgecolor="none")
-
-    for idx, (bar, val) in enumerate(zip(ax.patches, vals[::-1])):
+    for bar, val in zip(ax.patches, vals[::-1]):
         max_abs = max(abs(vals)) if max(abs(vals)) > 0 else 1
         x_pos = val + max_abs * 0.02 if val >= 0 else val - max_abs * 0.02
         ha    = "left" if val >= 0 else "right"
         ax.text(x_pos, bar.get_y() + bar.get_height() / 2,
                 f"{val:+.3f}", va="center", ha=ha, fontsize=9, color="#7EC8E3")
-
     ax.axvline(0, color="rgba(29,105,150,0.4)", linewidth=0.8, linestyle="--")
     ax.set_xlabel("Valeur SHAP", fontsize=10, color="#4A7A9A")
-    ax.set_title(f"Top 10 features · {pred_label_fr}", fontsize=11,
-                 color="#FFFFFF", pad=14, fontweight="600")
+    ax.set_title(f"Top 10 features · {pred_label_fr}", fontsize=11, color="#FFFFFF", pad=14, fontweight="600")
     ax.tick_params(axis="y", labelsize=9,  colors="#7EC8E3")
     ax.tick_params(axis="x", labelsize=8,  colors="#2A5A7A")
     ax.spines[["top", "right", "left"]].set_visible(False)
@@ -390,7 +326,7 @@ try:
     plt.tight_layout()
     st.pyplot(fig)
     plt.close(fig)
-
+ 
     with st.expander("📈 Summary plot global"):
         fig2, _ = plt.subplots(figsize=(9, 5))
         fig2.patch.set_facecolor("#0D1E30")
@@ -401,18 +337,18 @@ try:
         plt.tight_layout()
         st.pyplot(fig2)
         plt.close(fig2)
-
+ 
 except Exception as e:
     st.warning(f"Impossible de générer les explications SHAP : {e}")
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ══════════════════════════════════════════════════════════════════════════════
 # BLOC 3 — Sauvegarde
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">💾 &nbsp;Enregistrer le dossier</div>', unsafe_allow_html=True)
-
+ 
 st.markdown(f"""
 <div style="margin-bottom:20px;">
     <span class="patient-chip">👤 {prenom} {nom}</span>
@@ -421,51 +357,48 @@ st.markdown(f"""
     <span class="patient-chip" style="color:{accent}; border-color:{accent};">🎯 {pred_label_fr}</span>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 col_save, col_reco, col_new, _ = st.columns([1.5, 1.8, 1.5, 2])
-
+ 
 with col_save:
     st.markdown('<div class="save-btn">', unsafe_allow_html=True)
-    save_btn = st.button("💾  Enregistrer", use_container_width=True)
+    save_btn = st.button("💾  Enregistrer", use_container_width=True, key="save_btn")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 with col_reco:
     st.markdown('<div class="reco-btn">', unsafe_allow_html=True)
-    reco_btn = st.button("✍️  Rédiger les recommandations", use_container_width=True)
+    reco_btn = st.button("✍️  Rédiger les recommandations", use_container_width=True, key="reco_btn")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 with col_new:
     st.markdown('<div class="new-btn">', unsafe_allow_html=True)
-    new_btn = st.button("➕  Nouveau patient", use_container_width=True)
+    new_btn = st.button("➕  Nouveau patient", use_container_width=True, key="new_btn")
     st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ── Save logic ─────────────────────────────────────────────────────────────────
 def save_record():
-    os.makedirs(RECORDS_DIR, exist_ok=True)
-    path = os.path.join(RECORDS_DIR, f"{patient_id}.json")
-
-    # Charger l'existant pour ne pas écraser les recommandations
+    record_path = RECORDS_DIR / f"{patient_id}.json"
     existing = {}
-    if os.path.exists(path):
-        with open(path, "r") as f:
+    if record_path.exists():
+        with open(record_path, "r", encoding="utf-8") as f:
             existing = json.load(f)
-
     record = {
         **existing,
-        "patient_id":   patient_id,
-        "patient_name": f"{prenom} {nom}",
-        "date_analyse": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "doctor":       st.session_state.get("display_name", "Inconnu"),
-        "prediction":   pred_label,
-        "BMI":          round(bmi_val, 2),
+        "patient_id":    patient_id,
+        "patient_name":  f"{prenom} {nom}",
+        "prenom":        prenom,
+        "nom":           nom,
+        "date_analyse":  datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "doctor":        st.session_state.get("display_name", "Inconnu"),
+        "prediction":    pred_label,
+        "BMI":           round(bmi_val, 2),
         "clinical_data": patient_data,
     }
-
-    with open(path, "w") as f:
+    with open(record_path, "w", encoding="utf-8") as f:
         json.dump(record, f, indent=2, ensure_ascii=False)
-
+ 
 if save_btn:
     if st.session_state.get("patient_saved"):
         st.info("Ce dossier a déjà été enregistré dans cette session.")
@@ -476,7 +409,7 @@ if save_btn:
             st.success(f"✅ Dossier de {prenom} {nom} enregistré avec succès.")
         except Exception as e:
             st.error(f"Erreur lors de la sauvegarde : {e}")
-
+ 
 if reco_btn:
     if not st.session_state.get("patient_saved"):
         try:
@@ -486,8 +419,9 @@ if reco_btn:
             st.error(f"Erreur lors de la sauvegarde : {e}")
             st.stop()
     st.switch_page("pages/doctor_recommendations.py")
-
+ 
 if new_btn:
-    for key in ["patient_data", "patient_info", "prediction", "patient_saved", "selected_patient_id"]:
+    for key in ["patient_data", "patient_info", "prediction", "prediction_label",
+                "prediction_confidence", "prediction_bmi", "patient_saved", "selected_patient_id"]:
         st.session_state.pop(key, None)
     st.switch_page("pages/doctor_data_entry.py")
