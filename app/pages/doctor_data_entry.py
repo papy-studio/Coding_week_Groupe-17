@@ -22,7 +22,19 @@ if not st.session_state.get("logged_in") or st.session_state.get("role") != "doc
     if st.button("🔐 Se connecter"):
         st.switch_page("pages/doctor_login.py")
     st.stop()
- 
+
+# ── Vider la session si on arrive en mode "Nouveau patient" ───────────────────
+# Déclenché par le bouton "➕ Nouveau patient" depuis le dashboard ou doctor_result
+if st.session_state.get("new_patient_mode"):
+    for key in [
+        "selected_patient_id", "patient_info", "patient_data",
+        "patient_saved", "current_record", "current_patient_id",
+        "reco_text", "diet_text", "prediction",
+        "prediction_label", "prediction_confidence", "prediction_bmi",
+    ]:
+        st.session_state.pop(key, None)
+    st.session_state.pop("new_patient_mode", None)
+
 # ── Chemins absolus ────────────────────────────────────────────────────────────
 BASE_DIR      = Path(__file__).resolve().parent.parent.parent
 PATIENTS_PATH = BASE_DIR / "data" / "patients.json"
@@ -221,11 +233,13 @@ with st.sidebar:
         st.session_state.clear()
         st.switch_page("pages/home.py")
  
-# ── Page header ───────────────────────────────────────────────────────────────
+# ── Détection du mode (nouveau vs édition) ────────────────────────────────────
 existing_patient_id  = st.session_state.get("selected_patient_id")
 prefill_patient_info = st.session_state.get("patient_info", {})
-is_edit_mode         = bool(existing_patient_id and prefill_patient_info)
- 
+# Mode édition seulement si on a un ID ET des infos patient en session
+is_edit_mode = bool(existing_patient_id and prefill_patient_info.get("prenom"))
+
+# ── Page header ───────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="page-header">
     <div class="page-eyebrow">Espace Médecin · Saisie clinique</div>
@@ -255,20 +269,22 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('<div class="field-label">Prénom <span class="req">*</span></div>', unsafe_allow_html=True)
     first_name = st.text_input("prenom", placeholder="Prénom",
-                               value=prefill_patient_info.get("prenom", ""),
+                               value=prefill_patient_info.get("prenom", "") if is_edit_mode else "",
                                label_visibility="collapsed")
 with col2:
     st.markdown('<div class="field-label">Nom <span class="req">*</span></div>', unsafe_allow_html=True)
     last_name = st.text_input("nom", placeholder="Nom",
-                              value=prefill_patient_info.get("nom", ""),
+                              value=prefill_patient_info.get("nom", "") if is_edit_mode else "",
                               label_visibility="collapsed")
 with col3:
     st.markdown('<div class="field-label">ID Patient <span class="req">*</span></div>', unsafe_allow_html=True)
-    patient_id_input = st.text_input("patient_id",
-                                     placeholder="ex: patient001",
-                                     value=existing_patient_id or "",
-                                     disabled=is_edit_mode,
-                                     label_visibility="collapsed")
+    patient_id_input = st.text_input(
+        "patient_id",
+        placeholder="ex: patient001",
+        value=existing_patient_id if is_edit_mode else "",
+        disabled=is_edit_mode,   # désactivé seulement en mode édition
+        label_visibility="collapsed",
+    )
  
 col4, col5, col6 = st.columns(3)
 with col4:
@@ -437,6 +453,8 @@ if submit:
             "MTRANS":                         mtrans_map[mtrans],
         }
         st.session_state.pop("patient_saved", None)
+        st.session_state.pop("current_record", None)
+        st.session_state.pop("current_patient_id", None)
  
         st.success(f"✅ Dossier de {full_name} créé. Lancement de l'analyse…")
         st.switch_page("pages/doctor_result.py")
