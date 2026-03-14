@@ -18,3 +18,37 @@ def init_data_files():
 
 init_data_files()
 st.switch_page("pages/home.py")
+st.markdown("""
+<style>
+/* Texte visible dans tous les inputs */
+input, textarea {
+    color: #FFFFFF !important;
+    caret-color: #FFFFFF !important;
+    background-color: #1A2B40 !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #8AA4BF !important;
+}
+
+/* Fix autofill Mac/Safari */
+input:-webkit-autofill {
+    -webkit-text-fill-color: #FFFFFF !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1A2B40 inset !important;
+}
+
+/* Selectbox */
+[data-testid="stSelectbox"] div {
+    color: #FFFFFF !important;
+    background-color: #1A2B40 !important;
+}
+
+/* Labels */
+label {
+    color: #FFFFFF !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+init_data_files()
+st.switch_page("pages/home.py")
