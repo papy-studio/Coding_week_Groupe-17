@@ -1,4 +1,30 @@
 import streamlit as st
+# ── buton style ────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* Boutons home */
+[data-testid="stButton"] button {
+    color: #FFFFFF !important;
+    border: none !important;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* Bouton Médecin — bleu */
+[data-testid="stButton"]:nth-of-type(1) button {
+    background-color: #1D6996 !important;
+}
+
+/* Bouton Patient — vert */
+[data-testid="stButton"]:nth-of-type(2) button {
+    background-color: #52B788 !important;
+}
+
+[data-testid="stButton"] button:hover {
+    opacity: 0.85 !important;
+    color: #FFFFFF !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
