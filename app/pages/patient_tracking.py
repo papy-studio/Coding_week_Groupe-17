@@ -37,12 +37,14 @@ def load_imc():
     path = RECORDS_DIR / f"{patient_id}.json"
     if not path.exists():
         return 0.0
-    try:
-        with open(path, "r") as f:
-            record = json.load(f)
-        return float(record.get("BMI", 0))
-    except Exception:
-        return 0.0
+    for enc in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
+        try:
+            with open(path, "r", encoding=enc) as f:
+                record = json.load(f)
+            return float(record.get("BMI", 0))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+    return 0.0
 
 imc = load_imc()
 
@@ -65,7 +67,7 @@ def save_poids(poids: float):
     if path.exists():
         df = pd.read_csv(path)
         df["date"] = pd.to_datetime(df["date"]).dt.date.astype(str)
-        df = df[df["date"] != today_str]   # évite doublon même jour
+        df = df[df["date"] != today_str]
         df = pd.concat([df, new_row], ignore_index=True)
     else:
         df = new_row
@@ -77,22 +79,18 @@ def get_alerte(df: pd.DataFrame, imc: float):
         return None, None
     poids = df["poids"].tolist()
 
-    # Baisse régulière ≥ 2 entrées
     n = min(3, len(poids))
     if n >= 2 and all(poids[i] > poids[i+1] for i in range(-n, -1)):
         return "success", "💪 Excellent travail ! Votre poids est en baisse régulière. Continuez ainsi !"
 
-    # Hausse 2 entrées consécutives (priorité sur stable)
     if len(poids) >= 2 and poids[-1] > poids[-2]:
         return "error", "⚠️ Votre poids augmente depuis 2 semaines. Consultez votre médecin prochainement."
 
-    # Stable ≥ 3 entrées (variation < 0.5 kg)
     if len(poids) >= 3:
         variation = max(poids[-3:]) - min(poids[-3:])
         if variation < 0.5:
             return "warning", "🏃 Votre poids est stable depuis 3 semaines. Pensez à varier votre activité physique."
 
-    # IMC critique après 4 entrées
     if len(df) >= 4 and imc >= 35:
         return "error", "🚨 Votre IMC reste critique après 1 mois de suivi. Une consultation urgente est recommandée."
 
@@ -115,7 +113,6 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 [data-testid="stMain"] { position: relative; z-index: 1; }
 
-/* ── Sidebar ── */
 [data-testid="stSidebar"] { background: #0D1E30 !important; border-right: 1px solid rgba(82,183,136,0.12) !important; }
 [data-testid="stSidebar"] * { color: #3A7A5A !important; }
 [data-testid="stSidebar"] hr { border-color: rgba(82,183,136,0.12) !important; margin: 14px 0; }
@@ -134,13 +131,11 @@ html, body, [data-testid="stAppViewContainer"] {
     background: rgba(82,183,136,0.20) !important; color: #A8E6CF !important; transform: none !important;
 }
 
-/* ── Page header ── */
 .page-header { margin-bottom: 28px; }
 .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #1A4A3A; margin-bottom: 6px; }
 .page-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.8px; margin-bottom: 4px; }
 .page-sub { font-size: 14px; color: #1A3A2A; font-weight: 300; }
 
-/* ── KPI cards ── */
 .kpi-card {
     background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px; padding: 20px 22px; text-align: center; position: relative; overflow: hidden;
@@ -153,7 +148,6 @@ html, body, [data-testid="stAppViewContainer"] {
 .kpi-value { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #FFFFFF; margin-bottom: 4px; }
 .kpi-label { font-size: 11px; color: #1A4A3A; text-transform: uppercase; letter-spacing: 0.8px; }
 
-/* ── Section card ── */
 .section-card {
     background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
     border-radius: 16px; padding: 28px 32px; margin-bottom: 20px;
@@ -172,12 +166,10 @@ html, body, [data-testid="stAppViewContainer"] {
     background: linear-gradient(to right, rgba(82,183,136,0.3), transparent); margin-left: 8px;
 }
 
-/* ── Alerte boxes ── */
 .alerte-success { background: rgba(82,183,136,0.12); border: 1px solid rgba(82,183,136,0.35); border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #A8E6CF; margin-bottom: 20px; }
 .alerte-warning { background: rgba(244,162,97,0.12); border: 1px solid rgba(244,162,97,0.35); border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #F4C261; margin-bottom: 20px; }
 .alerte-error   { background: rgba(224,82,82,0.12);  border: 1px solid rgba(224,82,82,0.35);  border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #FF9999;  margin-bottom: 20px; }
 
-/* ── Number input ── */
 [data-testid="stNumberInput"] label { color: #3A7A5A !important; font-size: 13px !important; }
 [data-testid="stNumberInput"] input {
     background: rgba(255,255,255,0.05) !important;
@@ -189,7 +181,6 @@ html, body, [data-testid="stAppViewContainer"] {
     border-color: #52B788 !important; box-shadow: 0 0 0 3px rgba(82,183,136,0.12) !important;
 }
 
-/* ── Save button ── */
 .save-btn [data-testid="stButton"] > button {
     background: linear-gradient(135deg, #52B788, #3d9e70) !important;
     color: #FFFFFF !important; border: none !important; border-radius: 10px !important;
@@ -201,7 +192,6 @@ html, body, [data-testid="stAppViewContainer"] {
     transform: translateY(-1px) !important; box-shadow: 0 8px 24px rgba(82,183,136,0.38) !important;
 }
 
-/* ── Empty state ── */
 .empty-state {
     background: rgba(255,255,255,0.02); border: 2px dashed rgba(82,183,136,0.25);
     border-radius: 16px; padding: 48px; text-align: center;
@@ -276,7 +266,6 @@ if not df.empty:
             <div class="kpi-label">Semaines de suivi</div>
         </div>""", unsafe_allow_html=True)
 
-    # ── Alerte ────────────────────────────────────────────────────────────────
     alerte_type, alerte_msg = get_alerte(df, imc)
     if alerte_msg:
         st.markdown(f'<div class="alerte-{alerte_type}">{alerte_msg}</div>', unsafe_allow_html=True)
@@ -310,7 +299,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ══════════════════════════════════════════════════════════════════════════════
 # GRAPHIQUE + HISTORIQUE
 # ══════════════════════════════════════════════════════════════════════════════
-df = load_suivi()   # recharger après éventuel save
+df = load_suivi()
 
 if df.empty:
     st.markdown("""
@@ -341,11 +330,26 @@ else:
         annotation_text=f"Initial : {df['poids'].iloc[0]:.1f} kg",
         annotation_font_color="#7EC8E3", annotation_font_size=11,
     )
+
+    # ✅ FIX : titlefont est déprécié → utiliser title=dict(text=..., font=dict(...))
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="DM Sans", color="#4A7A6A"),
-        xaxis=dict(showgrid=True, gridcolor="rgba(82,183,136,0.08)", tickfont=dict(color="#3A7A5A", size=11), title=None),
-        yaxis=dict(showgrid=True, gridcolor="rgba(82,183,136,0.08)", tickfont=dict(color="#3A7A5A", size=11), title="Poids (kg)", titlefont=dict(color="#3A7A5A", size=12)),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(82,183,136,0.08)",
+            tickfont=dict(color="#3A7A5A", size=11),
+            title=None,
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(82,183,136,0.08)",
+            tickfont=dict(color="#3A7A5A", size=11),
+            title=dict(
+                text="Poids (kg)",
+                font=dict(color="#3A7A5A", size=12),
+            ),
+        ),
         margin=dict(l=0, r=0, t=10, b=0),
         height=320, showlegend=False, hovermode="x unified",
     )

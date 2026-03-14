@@ -30,24 +30,32 @@ TRACKING_DIR  = "data/tracking"
 def load_patients():
     if not os.path.exists(PATIENTS_PATH):
         return {}
-    with open(PATIENTS_PATH, "r") as f:
+    with open(PATIENTS_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def load_record(patient_id):
     path = os.path.join(RECORDS_DIR, f"{patient_id}.json")
     if not os.path.exists(path):
         return None
-    with open(path, "r") as f:
-        return json.load(f)
+    for enc in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
+        try:
+            with open(path, "r", encoding=enc) as f:
+                return json.load(f)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+    return None
 
 def load_latest_weight(patient_id):
     path = os.path.join(TRACKING_DIR, f"{patient_id}.csv")
     if not os.path.exists(path):
         return None
-    df = pd.read_csv(path)
-    if df.empty:
+    try:
+        df = pd.read_csv(path)
+        if df.empty:
+            return None
+        return df.iloc[-1]["poids"]
+    except Exception:
         return None
-    return df.iloc[-1]["poids"]
 
 LABEL_FR = {
     "Insufficient_Weight":  "Poids Insuffisant",
@@ -69,219 +77,188 @@ LABEL_COLOR = {
     "Obesity_Type_III":     "#7B0000",
 }
 
-# ── CSS ────────────────────────────────────────────────────────────────────────
+# ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body, [data-testid="stAppViewContainer"] {
-    font-family: 'DM Sans', sans-serif;
-    background: #0B1628;
+html, body, [data-testid="stApp"] {
+    font-family: 'Inter', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
 }
-[data-testid="stAppViewContainer"]::before {
-    content: '';
-    position: fixed; inset: 0;
-    background:
-        radial-gradient(ellipse at 10% 30%, rgba(29,105,150,0.15) 0%, transparent 55%),
-        radial-gradient(ellipse at 90% 70%, rgba(29,105,150,0.08) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
-}
-[data-testid="stMain"] { position: relative; z-index: 1; }
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
-    background: #0D1E30 !important;
-    border-right: 1px solid rgba(29,105,150,0.15) !important;
+    background: #141920 !important;
+    border-right: 1px solid #1e2a38;
 }
-[data-testid="stSidebar"] * { color: #4A7A9A !important; }
-[data-testid="stSidebar"] hr { border-color: rgba(29,105,150,0.15) !important; margin: 14px 0; }
-
 .sb-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px; font-weight: 600;
-    color: #FFFFFF !important;
-    letter-spacing: -0.3px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
     margin-bottom: 2px;
 }
-.sb-logo span { color: transparent;
-    background: linear-gradient(135deg,#52B788,#7EC8E3);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    background-clip:text;
+.sb-logo span { color: #4A9FD8; }
+.sb-tagline {
+    font-size: 0.75rem;
+    color: #6b7a8d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
 }
-.sb-tagline { font-size: 11px; color: #1D3A50 !important; margin-bottom: 20px; }
-
 .sb-user {
-    background: rgba(29,105,150,0.12);
-    border: 1px solid rgba(29,105,150,0.20);
-    border-radius: 12px; padding: 12px 14px; margin-bottom: 4px;
+    background: #1a2332;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 10px 0;
 }
-.sb-user-name { font-size: 13.5px; font-weight: 500; color: #FFFFFF !important; }
-.sb-user-role { font-size: 11px; color: #52B788 !important; margin-top: 2px; }
-
-[data-testid="stSidebar"] [data-testid="stButton"] > button {
-    background: rgba(29,105,150,0.12) !important;
-    color: #4A7A9A !important;
-    border: 1px solid rgba(29,105,150,0.20) !important;
-    border-radius: 8px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 13px !important;
-    transition: background 0.2s, color 0.2s !important;
-    box-shadow: none !important;
-}
-[data-testid="stSidebar"] [data-testid="stButton"] > button:hover {
-    background: rgba(29,105,150,0.22) !important;
-    color: #7EC8E3 !important;
-    transform: none !important;
-}
+.sb-user-name { font-weight: 600; font-size: 0.95rem; color: #e2e8f0; }
+.sb-user-role { font-size: 0.78rem; color: #52B788; margin-top: 3px; }
 
 /* ── Page header ── */
-.page-header { margin-bottom: 32px; }
-.page-eyebrow {
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    color: #1D4A6A; margin-bottom: 6px;
-}
-.page-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 34px; font-weight: 600;
-    color: #FFFFFF; letter-spacing: -0.8px; margin-bottom: 4px;
-}
-.page-sub { font-size: 14px; color: #1D3A50; font-weight: 300; }
+.page-header { margin-bottom: 28px; padding-top: 8px; }
+.page-eyebrow { font-size: 0.72rem; color: #4A9FD8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.page-title { font-size: 2rem; font-weight: 700; color: #fff; line-height: 1.1; }
+.page-sub { font-size: 0.9rem; color: #6b7a8d; margin-top: 6px; }
 
-/* ── KPI cards ── */
+/* ── KPI grid ── */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
 }
 .kpi-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
+    background: #141920;
+    border: 1px solid #1e2a38;
+    border-top: 3px solid var(--kpi-color, #4A9FD8);
+    border-radius: 12px;
     padding: 20px 22px;
-    position: relative; overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.kpi-card::before {
-    content: ''; position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: var(--kpi-color);
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
-.kpi-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px; font-weight: 600;
-    color: #FFFFFF; line-height: 1;
-    margin-bottom: 4px;
+.kpi-icon { font-size: 1.5rem; }
+.kpi-num { font-size: 2.2rem; font-weight: 700; color: #fff; line-height: 1; }
+.kpi-label { font-size: 0.8rem; color: #6b7a8d; font-weight: 500; }
+
+/* ── Toolbar ── */
+[data-testid="stTextInput"] input {
+    background: #141920 !important;
+    border: 1px solid #1e2a38 !important;
+    border-radius: 8px !important;
+    color: #e2e8f0 !important;
+    padding: 10px 14px !important;
 }
-.kpi-label { font-size: 12px; color: #1D3A50; text-transform: uppercase; letter-spacing: 0.8px; }
-.kpi-icon { position: absolute; top: 18px; right: 18px; font-size: 20px; opacity: 0.4; }
+[data-testid="stTextInput"] input:focus {
+    border-color: #4A9FD8 !important;
+    box-shadow: 0 0 0 3px rgba(74,159,216,0.15) !important;
+}
+
+/* ── Boutons ── */
+[data-testid="stButton"] button {
+    background: #4A9FD8 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: background 0.2s ease !important;
+}
+[data-testid="stButton"] button:hover {
+    background: #3a8fc8 !important;
+}
 
 /* ── Section title ── */
 .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 18px; color: #FFFFFF;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     margin-bottom: 16px;
-    display: flex; align-items: center; gap: 10px;
-}
-.section-title::after {
-    content: ''; flex: 1; height: 1px;
-    background: linear-gradient(to right, rgba(29,105,150,0.3), transparent);
-    margin-left: 8px;
+    border-bottom: 1px solid #1e2a38;
+    padding-bottom: 10px;
 }
 
-/* ── Patient row card ── */
+/* ── Table header ── */
+.table-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr 1.5fr 1fr 1fr;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #1a2332;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #1e2a38;
+    margin-bottom: 0;
+}
+.table-header span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4A9FD8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ── Patient row ── */
 .patient-row {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    padding: 18px 22px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    transition: background 0.2s, border-color 0.2s, transform 0.2s;
-    cursor: pointer;
+    background: #141920;
+    border: 1px solid #1e2a38;
+    border-top: none;
+    padding: 12px 12px;
+    transition: background 0.15s ease;
 }
-.patient-row:hover {
-    background: rgba(29,105,150,0.08);
-    border-color: rgba(29,105,150,0.25);
-    transform: translateX(4px);
+.patient-row:hover { background: #1a2332; }
+.patient-id {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4A9FD8;
+    font-family: 'Courier New', monospace;
+    background: rgba(74,159,216,0.1);
+    padding: 3px 7px;
+    border-radius: 4px;
+    display: inline-block;
 }
-.patient-avatar {
-    width: 44px; height: 44px;
-    background: rgba(29,105,150,0.18);
-    border: 1px solid rgba(29,105,150,0.25);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
+.patient-name { font-weight: 600; font-size: 0.92rem; color: #e2e8f0; }
+.badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 4px;
+    font-weight: 500;
 }
-.patient-name {
-    font-size: 15px; font-weight: 500; color: #FFFFFF;
-    margin-bottom: 3px;
+.badge-ok { background: rgba(82,183,136,0.15); color: #52B788; }
+.badge-wait { background: rgba(107,122,141,0.15); color: #6b7a8d; }
+.diag-pill {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
 }
-.patient-meta { font-size: 12px; color: #1D3A50; }
-.patient-badge {
-    font-size: 11.5px; font-weight: 500;
-    padding: 4px 12px; border-radius: 20px;
-    border: 1px solid; white-space: nowrap;
-}
-.patient-date { font-size: 11.5px; color: #1D3A50; white-space: nowrap; }
-.patient-weight { font-size: 13px; color: #4A7A9A; white-space: nowrap; font-weight: 500;}
+.date-text { font-size: 0.82rem; color: #94a3b8; }
+.weight-text { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; }
 
 /* ── Empty state ── */
 .empty-state {
     text-align: center;
-    padding: 64px 32px;
-    background: rgba(255,255,255,0.02);
-    border: 1px dashed rgba(29,105,150,0.20);
-    border-radius: 16px;
+    padding: 60px 20px;
+    color: #6b7a8d;
 }
-.empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
-.empty-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #FFFFFF; margin-bottom: 8px; }
-.empty-sub { font-size: 13px; color: #1D3A50; }
+.empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-title { font-size: 1.1rem; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+.empty-sub { font-size: 0.85rem; }
 
-/* ── Search input ── */
-[data-testid="stTextInput"] label { display: none; }
-[data-testid="stTextInput"] input {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1.5px solid rgba(29,105,150,0.20) !important;
-    border-radius: 10px !important;
-    padding: 11px 14px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 14px !important;
-    color: #FFFFFF !important;
-}
-[data-testid="stTextInput"] input::placeholder { color: #1D3A50 !important; }
-[data-testid="stTextInput"] input:focus {
-    border-color: #1D6996 !important;
-    box-shadow: 0 0 0 3px rgba(29,105,150,0.15) !important;
-    background: rgba(29,105,150,0.08) !important;
-}
-
-/* ── New patient button ── */
-div[data-testid="column"]:last-child [data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #1D6996, #155a7a) !important;
-    color: #FFFFFF !important; border: none !important;
-    border-radius: 10px !important; padding: 11px 20px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 14px !important; font-weight: 500 !important;
-    box-shadow: 0 4px 16px rgba(29,105,150,0.30) !important;
-}
-
-/* ── Select patient button ── */
-.select-btn > [data-testid="stButton"] > button {
-    background: transparent !important;
-    color: #4A9EC0 !important;
-    border: 1px solid rgba(29,105,150,0.30) !important;
-    border-radius: 8px !important;
-    padding: 7px 16px !important;
-    font-size: 12.5px !important;
-    box-shadow: none !important;
-}
-.select-btn > [data-testid="stButton"] > button:hover {
-    background: rgba(29,105,150,0.15) !important;
-    transform: none !important;
-}
+/* Hide streamlit defaults */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 2rem !important; max-width: 1200px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -290,7 +267,7 @@ with st.sidebar:
     st.markdown("""
     <div class="sb-logo">Medi<span>Obes</span></div>
     <div class="sb-tagline">Espace Médecin</div>
-    <hr>
+    <hr style="border-color:#1e2a38; margin: 8px 0 16px;">
     """, unsafe_allow_html=True)
 
     name = st.session_state.get("display_name", "Médecin")
@@ -301,20 +278,19 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.page_link("pages/doctor_dashboard.py",      label="🏠  Tableau de bord")
-    st.page_link("pages/doctor_data_entry.py",     label="➕  Nouveau patient")
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-color:#1e2a38; margin: 12px 0;'>", unsafe_allow_html=True)
+    st.page_link("pages/doctor_dashboard.py",  label="🏠  Tableau de bord")
+    st.page_link("pages/doctor_data_entry.py", label="➕  Nouveau patient")
+    st.markdown("<hr style='border-color:#1e2a38; margin: 12px 0;'>", unsafe_allow_html=True)
 
     if st.button("🚪  Se déconnecter", use_container_width=True):
         st.session_state.clear()
         st.switch_page("pages/home.py")
 
-# ── Load data ──────────────────────────────────────────────────────────────────
+# ── Load data ─────────────────────────────────────────────────────────────────
 all_patients = load_patients()
 doctor_id    = st.session_state.get("username")
 
-# Filtrer les patients de ce médecin
 my_patients = {
     pid: pdata for pid, pdata in all_patients.items()
     if pdata.get("doctor_id") == doctor_id
@@ -331,16 +307,15 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── KPIs ──────────────────────────────────────────────────────────────────────
-total      = len(my_patients)
-with_record = sum(1 for pid in my_patients if load_record(pid) is not None)
-with_reco   = sum(
-    1 for pid in my_patients
-    if load_record(pid) and load_record(pid).get("recommendations")
-)
-at_risk = sum(
-    1 for pid in my_patients
-    if load_record(pid) and load_record(pid).get("prediction", "") in
-    ["Obesity_Type_I", "Obesity_Type_II", "Obesity_Type_III"]
+# Preload records once for KPIs
+records_cache = {pid: load_record(pid) for pid in my_patients}
+
+total       = len(my_patients)
+with_record = sum(1 for r in records_cache.values() if r is not None)
+with_reco   = sum(1 for r in records_cache.values() if r and r.get("recommendations"))
+at_risk     = sum(
+    1 for r in records_cache.values()
+    if r and r.get("prediction", "") in ["Obesity_Type_I", "Obesity_Type_II", "Obesity_Type_III"]
 )
 
 st.markdown(f"""
@@ -370,15 +345,14 @@ st.markdown(f"""
 
 # ── Toolbar ───────────────────────────────────────────────────────────────────
 col_search, col_btn = st.columns([4, 1.2])
-
 with col_search:
     search = st.text_input("search", placeholder="🔍  Rechercher un patient par nom…", label_visibility="collapsed")
-
 with col_btn:
     if st.button("➕  Nouveau patient", use_container_width=True):
+        st.session_state["new_patient_mode"] = True
         st.switch_page("pages/doctor_data_entry.py")
 
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 st.markdown('<div class="section-title">Liste des patients</div>', unsafe_allow_html=True)
 
 # ── Patient list ──────────────────────────────────────────────────────────────
@@ -391,10 +365,11 @@ if not my_patients:
     </div>
     """, unsafe_allow_html=True)
 else:
+    # Filter
     filtered = {
         pid: pdata for pid, pdata in my_patients.items()
-        if search.lower() in pdata.get("name", "").lower()
-    } if search else my_patients
+        if not search or search.lower() in pdata.get("name", "").lower()
+    }
 
     if not filtered:
         st.markdown(f"""
@@ -405,80 +380,74 @@ else:
         </div>
         """, unsafe_allow_html=True)
     else:
-        for pid, pdata in filtered.items():
-            record  = load_record(pid)
-            pred    = record.get("prediction", None) if record else None
-            pred_fr = LABEL_FR.get(pred, "—") if pred else "—"
-            color   = LABEL_COLOR.get(pred, "#4A7A9A") if pred else "#4A7A9A"
-            date    = record.get("date_analyse", "—") if record else "—"
-            weight  = load_latest_weight(pid)
-            weight_str = f"{weight} kg" if weight else "—"
-            has_reco = bool(record and record.get("recommendations")) if record else False
+        # ── Table header ──
+        st.markdown("""
+        <div class="table-header">
+            <span>ID Patient</span>
+            <span>Nom</span>
+            <span>Diagnostic</span>
+            <span>Dernière consultation</span>
+            <span>Poids</span>
+            <span>Action</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-            col_info, col_badge, col_weight, col_date, col_action = st.columns([3, 2.2, 1.2, 1.5, 1.2])
+        # ── Rows ──
+        for i, (pid, pdata) in enumerate(filtered.items()):
+            record       = records_cache.get(pid)
+            pred         = record.get("prediction") if record else None
+            pred_fr      = LABEL_FR.get(pred, "—") if pred else "—"
+            color        = LABEL_COLOR.get(pred, "#4A7A9A") if pred else "#4A7A9A"
+            date_consult = record.get("date_analyse", "—") if record else "—"
+            weight       = load_latest_weight(pid)
+            weight_str   = f"{weight} kg" if weight else "—"
+            has_reco     = bool(record and record.get("recommendations"))
 
-            with col_info:
+            # Row background via HTML then columns for interaction
+            st.markdown('<div class="patient-row">', unsafe_allow_html=True)
+
+            col_id, col_nom, col_diag, col_date, col_poids, col_action = st.columns([1, 2, 2, 1.5, 1, 1])
+
+            with col_id:
+                st.markdown(f'<span class="patient-id">{pid}</span>', unsafe_allow_html=True)
+
+            with col_nom:
+                badge_cls  = "badge-ok" if has_reco else "badge-wait"
+                badge_text = "✅ Recommandation" if has_reco else "⏳ En attente"
                 st.markdown(f"""
-                <div style="display:flex; align-items:center; gap:12px; padding:10px 0;">
-                    <div class="patient-avatar">👤</div>
-                    <div>
-                        <div class="patient-name">{pdata.get('name','—')}</div>
-                        <div class="patient-meta">ID : {pid} &nbsp;·&nbsp;
-                            {'✅ Reco rédigée' if has_reco else '⏳ En attente de reco'}
-                        </div>
-                    </div>
-                </div>
+                <div class="patient-name">{pdata.get('name', '—')}</div>
+                <span class="badge {badge_cls}">{badge_text}</span>
                 """, unsafe_allow_html=True)
 
-            with col_badge:
-                st.markdown(f"""
-                <div style="padding:10px 0; display:flex; align-items:center; height:100%;">
-                    <span class="patient-badge"
-                        style="color:{color}; border-color:{color}; background:{color}18;">
-                        {pred_fr}
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_weight:
-                st.markdown(f"""
-                <div style="padding:10px 0; display:flex; align-items:center; height:100%;">
-                    <span class="patient-weight">⚖️ {weight_str}</span>
-                </div>
-                """, unsafe_allow_html=True)
+            with col_diag:
+                if pred:
+                    bg = color + "22"
+                    st.markdown(
+                        f'<span class="diag-pill" style="background:{bg}; color:{color};">{pred_fr}</span>',
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown('<span style="color:#4b5563;">—</span>', unsafe_allow_html=True)
 
             with col_date:
-                st.markdown(f"""
-                <div style="padding:10px 0; display:flex; align-items:center; height:100%;">
-                    <span class="patient-date">📅 {date}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div class="date-text">{date_consult}</div>', unsafe_allow_html=True)
+
+            with col_poids:
+                st.markdown(f'<div class="weight-text">{weight_str}</div>', unsafe_allow_html=True)
 
             with col_action:
-                st.markdown('<div class="select-btn">', unsafe_allow_html=True)
-                if st.button("Voir →", key=f"view_{pid}"):
+                if st.button("Voir →", key=f"view_{pid}_{i}"):
                     st.session_state["selected_patient_id"] = pid
+                    name_parts = pdata.get("name", "").split()
+                    st.session_state["patient_info"] = {
+                        "prenom": name_parts[0] if name_parts else "—",
+                        "nom":    " ".join(name_parts[1:]) if len(name_parts) > 1 else "—",
+                    }
                     if record:
-                        st.session_state["patient_info"] = {
-                            "prenom": pdata.get("name", "").split()[0] if pdata.get("name") else "—",
-                            "nom":    " ".join(pdata.get("name", "").split()[1:]) if pdata.get("name") else "—",
-                        }
-                        st.session_state["patient_data"]    = record.get("clinical_data", {})
-                        st.session_state["prediction"]      = pred
+                        st.session_state["patient_data"] = record.get("clinical_data", {})
+                        st.session_state["prediction"]   = pred
                         st.switch_page("pages/doctor_result.py")
                     else:
-                        st.session_state["patient_info"] = {
-                            "prenom": pdata.get("name", "").split()[0] if pdata.get("name") else "—",
-                            "nom":    " ".join(pdata.get("name", "").split()[1:]) if pdata.get("name") else "—",
-                        }
                         st.switch_page("pages/doctor_data_entry.py")
-                st.markdown('</div>', unsafe_allow_html=True)
 
-            st.markdown("<div style='height:2px; background:rgba(29,105,150,0.08); border-radius:2px;'></div>",
-                        unsafe_allow_html=True)
-col1, col2 = st.columns([3,1])
-with col1:
-    st.title("👨‍⚕️ Tableau de bord")
-with col2:
-    if st.button("➕ Nouveau patient", use_container_width=True):
-        st.switch_page("doctor_create_patient.py")
+            st.markdown('</div>', unsafe_allow_html=True)
