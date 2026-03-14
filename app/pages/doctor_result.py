@@ -270,6 +270,7 @@ st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🔍 &nbsp;Explication SHAP</div>', unsafe_allow_html=True)
  
 try:
+    # LightGBM SHAP — retourne un array 3D (1, n_features, n_classes)
     explainer   = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(df_input)
     class_idx   = int(pred_int)
@@ -339,6 +340,7 @@ st.markdown(f"""
     <span class="patient-chip">🆔 {patient_id}</span>
     <span class="patient-chip">📏 IMC {bmi_val:.1f}</span>
     <span class="patient-chip" style="color:{accent}; border-color:{accent};">🎯 {pred_label_fr}</span>
+    <span class="patient-chip">🤖 {model_name}</span>
 </div>
 """, unsafe_allow_html=True)
  
