@@ -293,3 +293,4 @@ Ce projet démontre comment le **machine learning explicable** peut être utilis
 
 En combinant **prédiction automatique, transparence des modèles et interface interactive**, cette application constitue un outil utile pour le **suivi et la prévention de l’obésité**.
 
+ydkyhgyltmègyçio
