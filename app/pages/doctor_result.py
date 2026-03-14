@@ -158,7 +158,12 @@ with st.sidebar:
 # ── Load model ─────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_best_model():
-    for model_name, path in MODEL_PRIORITY:
+    model_paths = [
+        ("LightGBM", BASE_DIR / "src" / "models" / "model.pkl"),
+        ("LightGBM", BASE_DIR / "models" / "model.pkl"),
+        ("LightGBM", BASE_DIR / "outputs" / "lightgbm.pkl"),
+    ]
+    for model_name, path in model_paths:
         if path.exists():
             try:
                 obj = joblib.load(path)
