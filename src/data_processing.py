@@ -56,3 +56,15 @@ print(f"X_test  : {X_test.shape}")
 
 
 
+from sklearn.preprocessing import StandardScaler
+
+# Normaliser la data
+# StandardScaler met toutes les features à la même échelle
+# moyenne=0 et écart-type=1 pour chaque feature
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled  = scaler.transform(X_test)
+
+# Remplacer dans le modèle
+model.fit(X_train_scaled, y_train)
+y_pred = model.predict(X_test_scaled)

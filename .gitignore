@@ -12,10 +12,8 @@ __pycache__/
 venv/
 .env
 
-# Données brutes (trop lourdes pour GitHub)
-data/*
-!data/.gitkeep
-
-# Modèles sauvegardés
-*.pkl
-*.joblib
+data/*.csv
+data/records/
+outputs/*.pkl
+models/*.pkl
+data/*.json
