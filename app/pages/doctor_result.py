@@ -309,20 +309,6 @@ try:
     st.pyplot(fig)
     plt.close(fig)
  
-    with st.expander("📈 Summary plot global"):
-        fig2, _ = plt.subplots(figsize=(9, 5))
-        fig2.patch.set_facecolor("#0D1E30")
-        if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
-            shap_for_summary = shap_values[:, :, class_idx]
-        elif isinstance(shap_values, list):
-            shap_for_summary = shap_values[class_idx]
-        else:
-            shap_for_summary = shap_values
-        shap.summary_plot(shap_for_summary, df_input, feature_names=feature_names_fr, show=False, plot_size=None)
-        plt.tight_layout()
-        st.pyplot(fig2)
-        plt.close(fig2)
- 
 except Exception as e:
     st.warning(f"Impossible de generer les explications SHAP : {e}")
  
