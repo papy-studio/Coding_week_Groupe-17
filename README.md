@@ -254,7 +254,7 @@ pip install -r requirements.txt
 
 ### Générer le modèle
 
-Les fichiers `.pkl` ne sont pas inclus dans le dépôt. Pour les générer sur Google Colab :
+Les fichiers `.pkl` ne sont pas inclus dans le dépôt. Pour les générer sur Google Colab  :
 
 1. Ouvrir `src/LightGBM.ipynb` dans Google Colab
 2. Exécuter toutes les cellules
