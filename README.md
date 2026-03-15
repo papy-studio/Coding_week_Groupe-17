@@ -367,44 +367,52 @@ Un test en échec bloque le merge — garantissant que le modèle et le flux pat
 ---
 
 ## 10. Structure du projet
-
 ```
 Coding_week_Groupe-17/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                  # Pipeline CI GitHub Actions
 ├── app/
+│   ├── pages/                      # Toutes les pages Streamlit
+│   ├── utils/                      # Utilitaires (loader, etc.)
 │   ├── app.py                      # Point d'entrée Streamlit
-│   └── pages/                      # Toutes les pages (structure plate)
-├── src/
-│   ├── models/
-│   │   └── model.pkl               # Modèle LightGBM entraîné
-│   └── data/
-│       ├── X_train.csv
-│       ├── X_test.csv
-│       ├── y_train.csv
-│       └── y_test.csv
+│   └── model_utils.py              # Utilitaires modèle
 ├── data/
-│   ├── doctors.json
-│   ├── patients.json
-│   ├── records/
-│   └── tracking/
+│   ├── records/                    # Dossiers médicaux JSON par patient
+│   ├── tracking/                   # Historique poids CSV par patient
+│   ├── doctors.json                # Comptes médecins
+│   └── patients.json               # Comptes patients
 ├── notebooks/
-│   ├── LightGBM.ipynb              # Notebook d'entraînement du modèle
-│   ├── eda.ipynb                   # Analyse exploratoire des données
-│   └── shap_analysis.ipynb         # Analyse SHAP
+│   ├── data/                       # Données notebooks
+│   ├── Analyse.ipynb               # Analyse générale
+│   └── eda.ipynb                   # Analyse exploratoire
+├── outputs/
+│   ├── results.txt                 # Résultats des comparaisons
+│   └── test_output.txt             # Sorties des tests
+├── src/
+│   ├── data/                       # Données d'entraînement (CSV)
+│   ├── models/                     # Modèle entraîné (model.pkl)
+│   ├── comparaison.ipynb           # Comparaison des modèles
+│   ├── data_processing.py          # Preprocessing
+│   ├── LightGBM.ipynb              # Notebook entraînement LightGBM
+│   ├── run_comparison.py           # Script comparaison modèles
+│   ├── shap_analysis.ipynb         # Analyse SHAP
+│   ├── shap_lightgbm.ipynb         # SHAP spécifique LightGBM
+│   ├── test_imports.py             # Test des imports
+│   ├── train_model.ipynb           # Notebook entraînement
+│   └── XGBoost_evaluation.ipynb    # Évaluation XGBoost
 ├── tests/
+│   ├── assets/                     # Assets des tests
+│   ├── rapport_tests.html          # Rapport HTML des tests
 │   ├── test_models.py              # Tests unitaires du modèle
 │   └── test_patient_flow.py        # Tests d'intégration
-├── .streamlit/
-│   └── config.toml                 # Configuration du thème Streamlit
 ├── .dockerignore                   # Fichiers exclus du build Docker
+├── .gitignore                      # Fichiers exclus de Git
 ├── Dockerfile                      # Configuration Docker
-├── requirements.txt
-└── README.md
+├── README.md                       # Documentation du projet
+├── requirements-dev.txt            # Dépendances développement
+└── requirements.txt                # Dépendances production
 ```
-
----
 
 ## 11. Équipe
 
