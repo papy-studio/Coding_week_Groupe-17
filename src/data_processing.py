@@ -53,6 +53,9 @@ print("✅ Fichiers CSV sauvegardés dans data/")
 print(f"X_train : {X_train.shape}")
 print(f"X_test  : {X_test.shape}")
 
+
+
+
 from sklearn.preprocessing import StandardScaler
 
 # Normaliser la data
