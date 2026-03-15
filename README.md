@@ -256,10 +256,10 @@ pip install -r requirements.txt
 
 Les fichiers `.pkl` ne sont pas inclus dans le dépôt. Pour les générer sur Google Colab :
 
-1. Ouvrir `notebooks/LightGBM.ipynb` dans Google Colab
+1. Ouvrir `src/LightGBM.ipynb` dans Google Colab
 2. Exécuter toutes les cellules
-3. Télécharger `model.pkl` et `label_encoder.pkl`
-4. Les placer dans `src/models/`
+3. le fichier `model.pkl` se télecharge automatiquement après avoir éxecuter `LightGBM.ipynb` et se place dans `src/models/`
+
 
 ### Lancer avec Streamlit
 
