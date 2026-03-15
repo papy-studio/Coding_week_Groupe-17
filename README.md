@@ -121,7 +121,7 @@ Le dépôt montre une approche basée sur la **classification supervisée multic
 4. Optimisation mémoire des colonnes numériques.
 5. Séparation en jeu d'entraînement et jeu de test.
 6. Entraînement et comparaison de plusieurs modèles.
-7. Intégration du meilleur modèle dans l'application.
+7. Intégration du meilleur modèle dans l'application(LightGBM Classifier).
 
 ### Modèles considérés dans le projet
 
@@ -297,7 +297,6 @@ pytest tests/test_patient_flow.py -v
 - la sauvegarde correcte des dossiers patients,
 - la stabilité générale du flux patient.
 
----
 
 
 ---
