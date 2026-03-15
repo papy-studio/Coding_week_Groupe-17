@@ -20,11 +20,10 @@ st.set_page_config(
  
 # ── Chemins absolus ────────────────────────────────────────────────────────────
 BASE_DIR    = Path(__file__).resolve().parent.parent.parent
+import os
 RECORDS_DIR = BASE_DIR / "data" / "records"
 MODEL_PRIORITY = [
-    ("LightGBM",      BASE_DIR / "outputs" / "lightgbm.pkl"),
-    ("LightGBM",      BASE_DIR / "src" / "models" / "model.pkl"),
-    ("Model",         BASE_DIR / "models" / "model.pkl"),
+    ("LightGBM", BASE_DIR / "src" / "models" / "model.pkl"),  # ← seul chemin
 ]
  
 # ── Auth guard ─────────────────────────────────────────────────────────────────
@@ -158,17 +157,16 @@ with st.sidebar:
 # ── Load model ─────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_best_model():
-    for model_name, path in MODEL_PRIORITY:
-        if path.exists():
-            try:
-                obj = joblib.load(path)
-                if isinstance(obj, dict) and "model" in obj:
-                    obj = obj["model"]
-                return obj, model_name
-            except Exception:
-                continue
-    return None, None
- 
+    path = BASE_DIR / "src" / "models" / "model.pkl"
+    try:
+        obj = joblib.load(path)
+        if isinstance(obj, dict) and "model" in obj:
+            obj = obj["model"]
+        return obj, "LightGBM"
+    except Exception as e:
+        st.error(f"Erreur chargement modèle : {e}")
+        return None, None
+
 model, model_name = load_best_model()
  
 # ── Patient data ───────────────────────────────────────────────────────────────

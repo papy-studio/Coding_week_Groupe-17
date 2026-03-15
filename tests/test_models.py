@@ -3,7 +3,6 @@
 ║     TESTS — LightGBM, CatBoost, XGBoost, Random Forest      ║
 ╠══════════════════════════════════════════════════════════════╣
 """
-
 import pytest
 import pandas as pd
 import numpy as np
@@ -44,7 +43,6 @@ VALID_RANGES = {
     "CALC":                           (0, 3),
     "MTRANS":                         (0, 4),
 }
-
 # ── Helpers ───────────────────────────────────────────────────
 def load_model(path):
     obj = joblib.load(path)

@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ── Page config ────────────────────────────────────────────────────────────────
+# ── Page config — DOIT ÊTRE EN PREMIER ────────────────────────────────────────
 st.set_page_config(
     page_title="MediObes · Accueil",
     page_icon="🩺",
@@ -16,6 +16,7 @@ st.markdown("""
 header[data-testid="stHeader"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ── Full CSS ───────────────────────────────────────────────────────────────────
 st.markdown("""
