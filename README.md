@@ -1,296 +1,350 @@
-# coding_week_Groupe-17
+# MediObes — Application d'aide à la décision pour l'estimation du niveau d'obésité
 
-# Application d'Aide à la Décision Médicale
+## 1) Présentation du projet
 
-## Estimation du Niveau d’Obésité avec Machine Learning Explicable
+**MediObes** est une application développée dans le cadre du projet **Coding Week**.
+L'objectif est de concevoir une solution simple, pédagogique et exploitable combinant :
 
-Ce projet a été réalisé dans le cadre de la **Coding Week (9–15 mars 2026)**.
+- une **analyse de données médicales**,
+- plusieurs **modèles de machine learning**,
+- une **interface Streamlit** pour les médecins et les patients,
+- une première couche d'**explicabilité** des prédictions.
 
-L’objectif est de développer une **application d’aide à la décision médicale** permettant aux médecins d’estimer le **niveau d’obésité d’un patient** à partir de ses habitudes alimentaires, de son mode de vie et de certaines caractéristiques physiques.
+Le projet estime le **niveau d'obésité** d'un patient à partir de ses caractéristiques physiques, de ses habitudes alimentaires et de son mode de vie.
 
-La solution combine :
-
-* **Machine Learning**
-* **Explainable AI (SHAP)**
-* **Interface interactive pour les médecins et les patients**
-
----
-
-# Objectifs du projet
-
-Les principaux objectifs sont :
-
-* Développer un **modèle de machine learning robuste** pour prédire le niveau d’obésité.
-* Assurer la **transparence des prédictions** grâce à l’utilisation de **SHAP**.
-* Concevoir une **interface simple et intuitive** pour les professionnels de santé.
-* Appliquer des **bonnes pratiques de développement logiciel** (GitHub, organisation du projet, tests).
+> **Important** : ce projet a une vocation **académique et pédagogique**. Il ne remplace pas un avis médical et ne doit pas être utilisé comme outil de diagnostic clinique réel.
 
 ---
 
-# Jeu de données
+## 2) Problématique
 
-Nous utilisons le dataset public du **UCI Machine Learning Repository** :
+L'obésité est un enjeu de santé publique majeur. Ce projet répond à la question suivante :
+
+**Comment concevoir une application capable d'estimer automatiquement le niveau d'obésité d'un patient?**
+
+---
+
+## 3) Objectifs pédagogiques et techniques
+
+### Objectifs pédagogiques
+
+- Découvrir un **workflow complet de projet data/IA**.
+- Manipuler un **jeu de données réel**.
+- Comprendre la différence entre **prétraitement, entraînement et test**.
+- Produire un projet **présentable devant un encadrant ou un jury**.
+
+### Objectifs techniques
+
+- Prédire une classe de la variable **NObeyesdad**.
+- Comparer plusieurs algorithmes de classification.
+- Construire une interface interactive avec **Streamlit**.
+- Sauvegarder des dossiers patients au format **JSON**.
+- Ajouter une première interprétation du modèle via **SHAP**.
+
+---
+
+## 4) Fonctionnalités principales
+
+### Côté médecin
+
+- connexion à un espace dédié,
+- saisie des données cliniques du patient,
+- estimation du niveau d'obésité,
+- affichage des probabilités de classes,
+- visualisation d'éléments d'explication,
+- ajout de recommandations,
+- sauvegarde du dossier patient.
+
+### Côté patient
+
+- connexion à un espace personnel,
+- consultation du profil,
+- visualisation du dernier résultat médical,
+- suivi de poids,
+- lecture des recommandations enregistrées.
+
+### Côté data science
+
+- préparation et encodage des données,
+- comparaison de plusieurs modèles,
+- sauvegarde des résultats,
+- tests automatiques sur les prédictions et les fichiers.
+
+---
+
+## 5) Jeu de données utilisé
+
+Le projet s'appuie sur le dataset public :
 
 **Estimation of Obesity Levels Based on Eating Habits and Physical Condition**
 
-Lien du dataset :
+Source indiquée dans le projet :
+- UCI Machine Learning Repository
+- https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition
 
-[https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition](https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition)
+### Variable cible
 
-Ce dataset contient des informations sur :
+La variable à prédire est :
 
-* le **genre**
-* l’**âge**
-* la **taille**
-* le **poids**
-* les **habitudes alimentaires**
-* l’**activité physique**
-* le **tabagisme**
-* le **mode de transport**
+- **NObeyesdad** : niveau d'obésité du patient.
 
-La variable cible est :
+### Exemples de variables d'entrée
 
-**NObeyesdad** : niveau d’obésité (7 classes).
-
----
-
-# Analyse et Prétraitement des données
-
-Plusieurs étapes de préparation des données ont été réalisées.
-
-## Encodage des variables catégorielles
-
-Les variables catégorielles ont été transformées en variables numériques :
-
-* variables binaires
-
-  * `yes / no → 1 / 0`
-* variables catégorielles
-
-  * encodage avec **LabelEncoder**
+- Gender
+- Age
+- Height
+- Weight
+- family_history_with_overweight
+- FAVC
+- FCVC
+- NCP
+- CAEC
+- SMOKE
+- CH2O
+- SCC
+- FAF
+- TUE
+- CALC
+- MTRANS
 
 ---
 
-## Optimisation de la mémoire
+## 6) Approche de machine learning
 
-Une fonction a été développée pour réduire l’utilisation mémoire :
+Le dépôt montre une approche basée sur la **classification supervisée multiclasses**.
 
-```
-optimize_memory(df)
-```
+### Étapes suivies
 
-Cette fonction convertit automatiquement :
+1. Chargement du dataset.
+2. Encodage des variables catégorielles.
+3. Encodage de la variable cible.
+4. Optimisation mémoire des colonnes numériques.
+5. Séparation en jeu d'entraînement et jeu de test.
+6. Entraînement et comparaison de plusieurs modèles.
+7. Intégration du meilleur modèle dans l'application.
 
-* `float64 → float32`
-* `int64 → int32`
+### Modèles considérés dans le projet
 
-Cela permet :
+- Random Forest Classifier
+- XGBoost Classifier
+- LightGBM Classifier
+- CatBoost Classifier
 
-* de réduire l’utilisation mémoire
-* d’améliorer les performances du traitement.
+### Explainable AI
 
----
-
-## Séparation des données
-
-Les données sont divisées en :
-
-* **80 % pour l'entraînement**
-* **20 % pour les tests**
-
-Cette séparation permet d’évaluer la performance du modèle sur des données non vues.
+Le projet prévoit l'usage de **SHAP** afin de mieux expliquer les facteurs ayant influencé la prédiction.
 
 ---
 
-# Modèles de Machine Learning
+## 7) Technologies utilisées
 
-Plusieurs modèles ont été testés et comparés :
-
-* **Random Forest Classifier**
-* **XGBoost Classifier**
-* **LightGBM Classifier**
-* **CatBoost Classifier**
-
-Les modèles ont été évalués selon plusieurs métriques :
-
-* Accuracy
-* Precision
-* Recall
-* F1-score
-* ROC-AUC
+- **Python**
+- **Streamlit** pour l'interface web
+- **Pandas / NumPy** pour le traitement de données
+- **Scikit-learn** pour la préparation et l'évaluation
+- **LightGBM / XGBoost / CatBoost / Random Forest** pour la classification
+- **Matplotlib / Seaborn / Plotly** pour la visualisation
+- **Joblib** pour la sauvegarde des modèles
+- **Pytest** pour les tests
 
 ---
 
-# Modèle sélectionné
+## 8) Structure réelle du dépôt
 
-Après comparaison des performances, **LightGBM Classifier** s’est révélé être le modèle le plus performant.
-
-Il offre :
-
-* la **meilleure accuracy**
-* une **bonne capacité de généralisation**
-* une **exécution rapide**
-
-Ce modèle a donc été choisi pour être intégré dans l’application.
-
----
-
-# Explainable AI avec SHAP
-
-Afin de garantir la **transparence des prédictions**, nous avons intégré **SHAP (SHapley Additive exPlanations)**.
-
-SHAP permet :
-
-* d’identifier les **variables les plus influentes**
-* d’expliquer les décisions du modèle
-* de rendre le modèle **compréhensible pour les médecins**
-
-Les visualisations SHAP incluent :
-
-* **SHAP Summary Plot**
-* **importance des variables**
-* **interprétation des prédictions individuelles**
-
----
-
-# Interface de l’application
-
-L’interface a été développée avec **Streamlit**.
-
-L’application comporte plusieurs pages destinées aux **médecins** et aux **patients**.
-
----
-
-## Interface médecin
-
-Le médecin peut :
-
-* saisir les données du patient
-* prédire le **niveau d’obésité**
-* visualiser les **explications du modèle**
-* fournir des **recommandations personnalisées**
-
----
-
-## Interface patient
-
-Le patient peut :
-
-* suivre son **évolution de santé**
-* effectuer un **suivi hebdomadaire**
-* consulter ses **résultats**
-* recevoir des **conseils adaptés**
-
-L’objectif est de permettre un **suivi continu et personnalisé**.
-
----
-
-# Architecture du projet
-
-Le projet suit une architecture professionnelle :
-
-```
-project/
-
-app/
-    app.py
-    pages/
-        doctor/
-        patient/
-
-data/
-
-notebooks/
-    eda.ipynb
-    Analyse.ipynb
-
-src/
-    data_processing.py
-    run_comparison.py
-
-tests/
-
-outputs/
-
-requirements.txt
-README.md
+```text
+Coding_week_Groupe-17-main/
+├── app/
+│   ├── app.py
+│   ├── espace_medecin.ipynb
+│   └── pages/
+│       ├── home.py
+│       ├── doctor_login.py
+│       ├── doctor_dashboard.py
+│       ├── doctor_data_entry.py
+│       ├── doctor_result.py
+│       ├── doctor_recommendations.py
+│       ├── doctor-register.py
+│       ├── patient_login.py
+│       ├── patient_profile.py
+│       ├── patient_tracking.py
+│       └── doctor/
+│           └── recommendations.py
+├── data/
+├── notebooks/
+│   ├── Analyse.ipynb
+│   ├── eda.ipynb
+│   └── data/
+├── outputs/
+│   ├── results.txt
+│   └── test_output.txt
+├── src/
+│   ├── data_processing.py
+│   ├── run_comparison.py
+│   ├── test_imports.py
+│   ├── train_model.ipynb
+│   ├── LightGBM.ipynb
+│   ├── comparaison.ipynb
+│   └── data/
+├── tests/
+│   ├── test_models.py
+│   ├── test_patient_flow.py
+│   ├── rapport_tests.html
+│   └── assets/
+├── requirements.txt
+└── README.md
 ```
 
-Description :
+### Rôle des principaux dossiers
 
-* **notebooks/** : analyse exploratoire des données
-* **src/** : pipeline de machine learning
-* **app/** : interface web
-* **tests/** : tests automatisés
-* **outputs/** : résultats des modèles
+- **app/** : interface Streamlit.
+- **src/** : scripts et notebooks orientés entraînement / comparaison.
+- **notebooks/** : analyse exploratoire et préparation des données.
+- **data/** : fichiers JSON et données utilisées par l'application.
+- **outputs/** : résultats, logs et modèles exportés lorsqu'ils sont générés.
+- **tests/** : tests automatiques fonctionnels et ML.
 
 ---
 
-# Installation
+## 9) Installation du projet
 
-Cloner le repository :
+### Prérequis
 
+Il est conseillé d'utiliser :
+
+- **Python 3.10 ou plus**
+- **pip**
+- un **environnement virtuel**
+
+### Étapes d'installation
+
+Depuis la racine du projet :
+
+```bash
+python -m venv .venv
 ```
-git clone <repository_url>
-cd project
+
+#### Sous Windows
+
+```bash
+.venv\Scripts\activate
 ```
 
-Installer les dépendances :
+#### Sous macOS / Linux
 
+```bash
+source .venv/bin/activate
 ```
+
+Puis installer les dépendances :
+
+```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-# Entraînement du modèle
+## 10) Lancer l'application
 
-Pour entraîner le modèle :
+Depuis la racine du projet, exécuter :
 
-```
-python src/train_model.py
-```
-
----
-
-# Lancer l’application
-
-Pour démarrer l’interface :
-
-```
+```bash
 streamlit run app/app.py
 ```
 
-L’application s’ouvrira automatiquement dans votre navigateur.
+### Remarque importante
+
+Au premier lancement, l'application crée automatiquement certains fichiers si besoin, par exemple :
+
+- `data/doctors.json`
+- `data/patients.json`
+- `data/records/`
+- `data/tracking/`
 
 ---
 
-# Reproductibilité
+## 11) Comptes de démonstration présents dans le code
 
-Le projet est entièrement reproductible.
+Le code initialise deux comptes médecins de test :
 
-Les étapes pour reproduire les résultats :
+- **dr.martin** / **medic123**
+- **dr.hassan** / **medic456**
 
-1. Installer les dépendances
-2. Entraîner le modèle
-3. Lancer l’application
 
----
-
-# Enseignements du projet
-
-Ce projet met en évidence :
-
-* l’importance des **habitudes de vie dans la prédiction de l’obésité**
-* la performance des **modèles de type gradient boosting**
-* l’utilité de **l’IA explicable** dans le domaine médical
 
 ---
 
-# Conclusion
+## 12) Exécuter les tests
 
-Ce projet démontre comment le **machine learning explicable** peut être utilisé pour soutenir les professionnels de santé dans la prise de décision.
+Lancer tous les tests :
 
-En combinant **prédiction automatique, transparence des modèles et interface interactive**, cette application constitue un outil utile pour le **suivi et la prévention de l’obésité**.
+```bash
+pytest tests -v
+```
 
-ydkyhgyltmègyçio
+Lancer séparément :
+
+```bash
+pytest tests/test_models.py -v
+pytest tests/test_patient_flow.py -v
+```
+
+### Ce que vérifient les tests
+
+- l'existence des fichiers nécessaires,
+- la validité des plages de données,
+- le chargement des modèles,
+- la cohérence des prédictions,
+- la sauvegarde correcte des dossiers patients,
+- la stabilité générale du flux patient.
+
+---
+
+
+---
+
+## 13) Compétences d'ingénierie mobilisées
+
+Ce projet est intéressant pour une 1re année d'ingéniorat car il fait intervenir plusieurs dimensions :
+
+- **algorithmique**,
+- **programmation Python**,
+- **gestion de données**,
+- **intelligence artificielle**,
+- **tests logiciels**,
+- **interface homme-machine**,
+- **organisation d'un projet en équipe**,
+- **communication technique**.
+
+---
+
+## 14) Limites du projet
+
+- Le dataset reste un dataset public académique, pas une base hospitalière réelle.
+- Les performances annoncées doivent être **revalidées** sur les modèles effectivement exportés.
+- La sécurité des comptes est volontairement simplifiée.
+- Le dépôt gagnerait à mieux séparer les scripts de production, les notebooks et les artefacts générés.
+
+---
+
+## 15) Auteurs
+
+Projet réalisé par le **Groupe 17** dans le cadre de la **Coding Week 2026**.
+
+Wiaam BOUGUEZOUR(cattcookies70-sudo)                      
+Meryem AZGARD(meryem000a-cmyk)                         
+Tawba BENZAYED(tawbabenzayed-droid)   
+Papy NANA(papy-studio)  
+Moubarak TIEMTORE(mbk7-dev)               
+
+**JIRA**   Pour organiser notre travail nous avons fait la répartition des tâches.
+
+
+
+---
+
+## 16) Conclusion
+
+
+Ce projet, **MediObes**, démontre comment le machine learning explicable peut être utilisé pour soutenir les professionnels de santé dans la prise de décision.
+
+En combinant prédiction automatique, transparence des modèles et interface interactive, cette application constitue un outil utile pour le suivi et la prévention de l’obésité.
