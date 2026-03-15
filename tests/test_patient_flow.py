@@ -41,8 +41,8 @@ PATIENT_TEST = {
 
 PATIENT_INFO = {"prenom": "Test", "nom": "Patient"}
 PATIENT_ID   = "test_patient_001"
-RECORDS_DIR  = "data/records"
-MODEL_PATH   = "models/model.pkl"
+RECORDS_DIR  = "src/data/records"
+MODEL_PATH   = "src/models/model.pkl"
 
 CLASSES = [
     "Insufficient_Weight", "Normal_Weight",
@@ -61,7 +61,7 @@ class TestModeleML:
     def test_modele_existe(self):
         """Le fichier model.pkl doit exister"""
         paths = [
-            "models/model.pkl",
+            "src/models/model.pkl",
             "outputs/lightgbm.pkl",
             "outputs/xgboost.pkl",
             "outputs/catboost.pkl",
@@ -82,7 +82,7 @@ class TestModeleML:
         assert hasattr(model, "predict_proba"), "Le modèle n'a pas de méthode predict_proba"
 
     def _load_model(self):
-        for path in ["models/model.pkl", "outputs/lightgbm.pkl",
+        for path in ["src/models/model.pkl", "outputs/lightgbm.pkl",
                      "outputs/xgboost.pkl", "outputs/catboost.pkl",
                      "outputs/random_forest.pkl"]:
             if os.path.exists(path):
@@ -102,7 +102,7 @@ class TestPrediction:
         self.df    = pd.DataFrame([PATIENT_TEST])
 
     def _load_model(self):
-        for path in ["models/model.pkl", "outputs/lightgbm.pkl",
+        for path in ["src/models/model.pkl", "outputs/lightgbm.pkl",
                      "outputs/xgboost.pkl", "outputs/catboost.pkl",
                      "outputs/random_forest.pkl"]:
             if os.path.exists(path):
@@ -260,7 +260,7 @@ class TestIntegrationFluxUI:
     """
 
     def _load_model(self):
-        for path in ["models/model.pkl", "outputs/lightgbm.pkl",
+        for path in ["src/models/model.pkl", "outputs/lightgbm.pkl",
                      "outputs/xgboost.pkl", "outputs/catboost.pkl",
                      "outputs/random_forest.pkl"]:
             if os.path.exists(path):
@@ -423,7 +423,7 @@ def test_flux_complet_sans_ui():
     """
     # 1. Charger le modèle
     model = None
-    for path in ["models/model.pkl", "outputs/lightgbm.pkl",
+    for path in ["src/models/model.pkl", "outputs/lightgbm.pkl",
                  "outputs/xgboost.pkl", "outputs/catboost.pkl",
                  "outputs/random_forest.pkl"]:
         if os.path.exists(path):
