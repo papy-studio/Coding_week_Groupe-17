@@ -28,7 +28,7 @@ MediObes est un outil clinique d'aide à la décision qui estime le niveau de ri
 - **Espace Médecin** — Saisie des données cliniques du patient, exécution de la prédiction, visualisation des explications SHAP, rédaction de recommandations personnalisées.
 - **Espace Patient** — Consultation du niveau de risque personnel, lecture des recommandations du médecin, suivi hebdomadaire de l'évolution du poids.
 
-**Stack technique :** Python 3.13 · Streamlit · LightGBM · SHAP · pandas · joblib · pytest · GitHub Actions
+**Stack technique :** Python 3.13 · Streamlit · LightGBM · SHAP · pandas · joblib · pytest · Docker · GitHub Actions
 
 ---
 
@@ -237,7 +237,7 @@ data/
 - Python 3.13
 - pip
 
-### Installation
+### Installation classique
 
 ```bash
 # 1. Cloner le dépôt
@@ -261,13 +261,43 @@ Les fichiers `.pkl` ne sont pas inclus dans le dépôt. Pour les générer sur G
 3. Télécharger `model.pkl` et `label_encoder.pkl`
 4. Les placer dans `src/models/`
 
-### Lancer l'application
+### Lancer avec Streamlit
 
 ```bash
 streamlit run app/app.py
 ```
 
 L'application s'ouvre à `http://localhost:8501`.
+
+### Lancer avec Docker
+
+Docker permet de lancer MediObes sans installer Python, pip ou les dépendances système — tout est encapsulé dans le container.
+
+```bash
+# 1. Créer le .dockerignore à la racine (évite de copier .venv et notebooks)
+cat > .dockerignore << 'EOF'
+.venv/
+__pycache__/
+*.pyc
+.git/
+.DS_Store
+notebooks/
+tests/
+*.ipynb
+data/records/
+data/tracking/
+EOF
+
+# 2. Builder l'image (5-10 min la première fois — LightGBM + SHAP sont lourds)
+docker build -t mediobes .
+
+# 3. Lancer le container
+docker run -p 8501:8501 mediobes
+```
+
+L'application est ensuite accessible à `http://localhost:8501`.
+
+> **Note :** Le premier build prend du temps (~5-10 min) car Docker installe toutes les dépendances depuis zéro. Les builds suivants seront instantanés grâce au cache — Docker ne réinstalle les packages que si `requirements.txt` change.
 
 ### Comptes médecin par défaut
 
@@ -368,8 +398,9 @@ Coding_week_Groupe-17/
 │   └── test_patient_flow.py        # Tests d'intégration
 ├── .streamlit/
 │   └── config.toml                 # Configuration du thème Streamlit
+├── .dockerignore                   # Fichiers exclus du build Docker
+├── Dockerfile                      # Configuration Docker
 ├── requirements.txt
-├── Dockerfile
 └── README.md
 ```
 
@@ -377,18 +408,18 @@ Coding_week_Groupe-17/
 
 ## 11. Équipe
 
-**Centrale Casablanca — Coding Week Mars 2026 
+**Centrale Casablanca — Coding Week Mars 2026 — Groupe 17**
 Projet réalisé par le **Groupe 17** dans le cadre de la **Coding Week 2026**.
 
 Wiaam BOUGUEZOUR(cattcookies70-sudo)                      
 Meryem AZGARD(meryem000a-cmyk)                         
 Tawba BENZAYED(tawbabenzayed-droid)   
 Papy NANA(papy-studio)  
-Moubarak TIEMTORE(mbk7-dev)   
+Moubarak TIEMTORE(mbk7-dev)      
 
 Organisation GitHub : [papy-studio](https://github.com/papy-studio)  
 Dépôt : [Coding_week_Groupe-17](https://github.com/papy-studio/Coding_week_Groupe-17)
 
 ---
 
-*MediObes — Centrale Casablanca · Coding Week 2026 · Toutes les données sont utilisés à des fins de démonstration uniquement.*
+*MediObes — Centrale Casablanca · Coding Week 2026 · Toutes les données sont confidentielles et à des fins de démonstration uniquement.*
