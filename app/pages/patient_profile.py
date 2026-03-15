@@ -298,7 +298,7 @@ if not display_name:
     display_name = f"{prenom} {nom}".strip() or "Patient"
 
 # Prénom seul pour le bonjour
-prenom_seul = display_name.split()[0] if display_name else "Patient"
+prenom_seul = (display_name.strip().split() or ["Patient"])[0]
 
 # ── Médecin référent ────────────────────────────────────────────
 # Priorité : reco_author du record > doctor du record > patients.json
